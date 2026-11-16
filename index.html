@@ -4,574 +4,403 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1f7a4a">
-<title>Safra Diário de Campo</title>
+<meta name="description" content="Safra é o caderno de campo do produtor: talhões, fases da lavoura, diário de manejo com fotos, chuva e calculadoras. No celular e no computador.">
+<title>Safra · Caderno de campo do produtor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet">
 <style>
-/* Plano: app de bolso claro e amigável; folha verde como ação, sol para destaque, terra como apoio.
-   Layout: uma coluna estreita tipo celular, cards arredondados, navegação inferior fixa. */
+/* Plano: página de apresentação clara e amigável, mesma identidade do app.
+   Layout: uma coluna com seções alternadas texto + tela do app; telas desenhadas em HTML. */
 :root{
-  --bg:#f3f6ef;
-  --surface:#ffffff;
-  --ink:#16261c;
-  --muted:#5f6f63;
-  --line:#e2e8dc;
-  --leaf:#1f7a4a;
-  --leaf-soft:#e2f2e7;
-  --sun:#f2a93b;
-  --sun-soft:#fdf0d9;
-  --soil:#8a5a3b;
-  --soil-soft:#f3e8df;
-  --sky:#2f7fb8;
-  --sky-soft:#e1eef8;
-  --danger:#c2412d;
-  --shadow:0 1px 2px rgba(22,38,28,.06),0 6px 18px rgba(22,38,28,.06);
-  --display:"Outfit",system-ui,sans-serif;
-  --body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#f3f6ef;--surface:#ffffff;--ink:#16261c;--muted:#5f6f63;--line:#e2e8dc;
+  --leaf:#1f7a4a;--leaf-soft:#e2f2e7;--sun:#f2a93b;--sun-soft:#fdf0d9;--soil:#8a5a3b;--soil-soft:#f3e8df;
+  --sky:#2f7fb8;--sky-soft:#e1eef8;--deep:#123b27;--on-leaf:#fff;
+  --shadow:0 1px 2px rgba(22,38,28,.06),0 10px 30px rgba(22,38,28,.08);
+  --display:"Outfit",system-ui,sans-serif;--body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0f1712;--surface:#17221b;--ink:#e8efe6;--muted:#9fb0a3;--line:#26352b;
-    --leaf:#4cc283;--leaf-soft:#173826;--sun:#f5b956;--sun-soft:#3a2d14;--soil:#d39a73;--soil-soft:#33261c;
-    --sky:#6ab3e6;--sky-soft:#152b3b;--danger:#ef7a66;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark;
-  }
-}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1712;--surface:#17221b;--ink:#e8efe6;--muted:#9fb0a3;--line:#26352b;--leaf:#4cc283;--leaf-soft:#173826;
+  --sun:#f5b956;--sun-soft:#3a2d14;--soil:#d39a73;--soil-soft:#33261c;--sky:#6ab3e6;--sky-soft:#152b3b;--deep:#0b2216;--on-leaf:#0b2216;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f1712;--surface:#17221b;--ink:#e8efe6;--muted:#9fb0a3;--line:#26352b;
-  --leaf:#4cc283;--leaf-soft:#173826;--sun:#f5b956;--sun-soft:#3a2d14;--soil:#d39a73;--soil-soft:#33261c;
-  --sky:#6ab3e6;--sky-soft:#152b3b;--danger:#ef7a66;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark;
-}
+  --bg:#0f1712;--surface:#17221b;--ink:#e8efe6;--muted:#9fb0a3;--line:#26352b;--leaf:#4cc283;--leaf-soft:#173826;
+  --sun:#f5b956;--sun-soft:#3a2d14;--soil:#d39a73;--soil-soft:#33261c;--sky:#6ab3e6;--sky-soft:#152b3b;--deep:#0b2216;--on-leaf:#0b2216;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
-button,input,select,textarea{font:inherit;color:inherit}
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
-.app{max-width:480px;margin:0 auto;min-height:100%;padding:0 16px calc(96px + env(safe-area-inset-bottom));padding-top:env(safe-area-inset-top)}
-header.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 10px}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px;color:var(--leaf)}
-.brand svg{width:30px;height:30px}
-.iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
-.iconbtn svg{width:20px;height:20px}
-.hello{margin:6px 0 16px}
-.hello h1{font-size:28px;font-weight:700}
-.hello p{margin:4px 0 0;color:var(--muted)}
-.section{margin:22px 0 10px;display:flex;align-items:baseline;justify-content:space-between}
-.section h2{font-size:19px;font-weight:700}
-.link{background:none;border:0;color:var(--leaf);font-weight:700;cursor:pointer;padding:4px}
-.card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:16px}
-.stack{display:grid;gap:12px}
-.scroller{display:grid;grid-auto-flow:column;grid-auto-columns:78%;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;margin:0 -2px}
-.scroller>*{scroll-snap-align:start}
-.plot{cursor:pointer;display:grid;gap:12px;border:0;text-align:left;width:100%}
-.plot-head{display:flex;gap:12px;align-items:center}
-.crop{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:none}
-.crop svg{width:28px;height:28px}
-.plot-name{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.15}
-.plot-sub{color:var(--muted);font-size:14px}
-.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;white-space:nowrap}
-.pill.leaf{background:var(--leaf-soft);color:var(--leaf)}
-.pill.sun{background:var(--sun-soft);color:var(--soil)}
-.pill.sky{background:var(--sky-soft);color:var(--sky)}
-.pill.soil{background:var(--soil-soft);color:var(--soil)}
-.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
-.stages i{height:8px;border-radius:99px;background:var(--line);position:relative;overflow:hidden}
-.stages i b{position:absolute;inset:0;background:var(--leaf);border-radius:99px}
-.stage-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
-.meta{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
-.meta strong{color:var(--ink);font-variant-numeric:tabular-nums}
-.rain{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:120px;margin-top:10px}
-.bar{display:grid;gap:6px;justify-items:center;align-self:stretch;grid-template-rows:1fr auto auto}
-.bar span{width:100%;max-width:28px;border-radius:8px 8px 4px 4px;background:var(--sky);align-self:end;min-height:3px}
-.bar small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.bar em{font-style:normal;font-size:11px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-.rain-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.big{font-family:var(--display);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
-.big small{font-size:15px;color:var(--muted);font-weight:600}
-.task{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
-.task:first-child{border-top:0;padding-top:0}
-.task:last-child{padding-bottom:0}
-.check{width:26px;height:26px;border-radius:9px;border:2px solid var(--leaf);background:transparent;flex:none;cursor:pointer;display:grid;place-items:center}
-.check.on{background:var(--leaf)}
-.check svg{width:16px;height:16px;color:var(--surface)}
-.task.done .tt{text-decoration:line-through;color:var(--muted)}
-.tt{font-weight:700}
-.ts{font-size:13px;color:var(--muted)}
-.late{color:var(--danger);font-weight:700}
-.entry{display:flex;gap:12px}
-.dot{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
-.dot svg{width:22px;height:22px}
-.entry-body{flex:1;min-width:0}
-.entry-top{display:flex;justify-content:space-between;gap:8px}
-.entry-title{font-weight:700}
-.entry-date{font-size:13px;color:var(--muted);white-space:nowrap}
-.entry-note{margin:4px 0 0;color:var(--muted);font-size:15px;overflow-wrap:anywhere}
-.entry img{width:100%;border-radius:14px;margin-top:10px;display:block;max-height:220px;object-fit:cover}
-.empty{text-align:center;color:var(--muted);padding:22px 8px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-.chip svg{width:16px;height:16px}
-.chip[aria-pressed="true"]{background:var(--leaf);border-color:var(--leaf);color:#fff}
-.tools{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tool{border:0;text-align:left;cursor:pointer;display:grid;gap:10px;min-height:128px;align-content:space-between}
-.tool h3{font-size:16px}
-.tool p{margin:0;font-size:13px;color:var(--muted)}
-nav.bottom{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:5}
-nav.bottom .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
-.tab{background:none;border:0;display:grid;justify-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;padding:6px 0;border-radius:12px}
-.tab svg{width:24px;height:24px}
-.tab[aria-current="page"]{color:var(--leaf)}
-.fab{width:56px;height:56px;border-radius:18px;background:var(--leaf);color:#fff;border:0;display:grid;place-items:center;justify-self:center;margin-top:-26px;box-shadow:0 8px 20px rgba(31,122,74,.35);cursor:pointer}
-.fab svg{width:28px;height:28px}
-.sheet-wrap{position:fixed;inset:0;background:rgba(10,20,14,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
-.sheet-wrap.open{display:flex}
-.sheet{background:var(--bg);width:100%;max-width:480px;max-height:92%;overflow:auto;border-radius:24px 24px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom))}
-.grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 12px}
-.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
-.sheet-head h2{font-size:22px}
-label{display:grid;gap:6px;font-weight:700;font-size:14px}
-.field{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;width:100%;min-height:48px}
-textarea.field{min-height:84px;resize:vertical}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn{border:0;border-radius:16px;min-height:52px;padding:0 18px;font-weight:800;font-family:var(--display);font-size:17px;cursor:pointer;background:var(--leaf);color:#fff;width:100%}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance;line-height:1.1}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+/* topo */
+.nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid transparent}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:23px;color:var(--leaf);text-decoration:none}
+.brand svg{width:32px;height:32px}
+.links{display:none;gap:28px;font-weight:700;color:var(--muted)}
+.links a{text-decoration:none}
+.links a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:16px;min-height:50px;padding:0 22px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;border:0;cursor:pointer;background:var(--leaf);color:var(--on-leaf);white-space:nowrap}
+.btn:hover{filter:brightness(1.06)}
 .btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
-.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
-.result{background:var(--leaf-soft);border-radius:16px;padding:14px;display:grid;gap:8px}
-.result div{display:flex;justify-content:space-between;gap:10px}
-.result strong{font-variant-numeric:tabular-nums;font-family:var(--display);font-size:18px}
-.hint{font-size:13px;color:var(--muted);margin:0}
-.detail-hero{display:grid;gap:14px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.stat{background:var(--surface);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
-.stat b{display:block;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
-.stat span{font-size:12px;color:var(--muted)}
-.timeline{display:grid;gap:0}
-.tl{display:grid;grid-template-columns:22px 1fr;gap:10px}
-.tl .ln{display:grid;justify-items:center;grid-template-rows:auto 1fr}
-.tl .ln i{width:14px;height:14px;border-radius:50%;border:3px solid var(--line);background:var(--surface);margin-top:3px}
-.tl .ln u{width:2px;background:var(--line);text-decoration:none}
-.tl.done .ln i{background:var(--leaf);border-color:var(--leaf)}
-.tl.done .ln u{background:var(--leaf)}
-.tl.now .ln i{border-color:var(--leaf);box-shadow:0 0 0 4px var(--leaf-soft)}
-.tl .tx{padding-bottom:14px}
-.tl .tx b{display:block}
-.tl .tx span{font-size:13px;color:var(--muted)}
-.list-item{display:flex;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
-.list-item:first-child{border-top:0}
-.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
-.toast.show{opacity:1}
-.welcome{background:linear-gradient(160deg,var(--leaf) 0%,#165c37 100%);color:#fff;border-radius:22px;padding:18px;display:grid;gap:8px;position:relative;overflow:hidden}
-.welcome p{margin:0;opacity:.92;font-size:15px}
-.welcome h3{font-size:19px}
-.welcome .sunball{position:absolute;right:-18px;top:-18px;width:86px;height:86px;border-radius:50%;background:var(--sun);opacity:.9}
+.btn.sm{min-height:42px;padding:0 16px;font-size:15px;border-radius:12px}
+/* hero */
+.hero{padding:40px 0 56px}
+.hero .wrap{display:grid;gap:40px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--leaf-soft);color:var(--leaf);font-weight:700;font-size:14px;border-radius:999px;padding:6px 14px}
+.hero h1{font-size:clamp(40px,7vw,68px);margin:18px 0 18px;max-width:13ch}
+.hero h1 em{font-style:normal;color:var(--leaf)}
+.lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:34ch}
+.ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.trust{margin-top:22px;display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:14px;font-weight:700}
+.trust span{display:inline-flex;align-items:center;gap:6px}
+.trust span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--leaf)}
+.stage{position:relative;display:grid;place-items:center;min-height:560px}
+.stage .sunball{position:absolute;width:300px;height:300px;border-radius:50%;background:var(--sun);opacity:.85;top:10px;right:6%}
+.stage .field{position:absolute;inset:auto 0 30px 0;height:46%;border-radius:40px;background:repeating-linear-gradient(-8deg,var(--leaf-soft) 0 22px,transparent 22px 40px);opacity:.9}
+/* celular desenhado */
+.phone{position:relative;width:290px;border-radius:44px;background:#0d1a12;padding:12px;box-shadow:0 30px 60px rgba(18,59,39,.28)}
+.phone .scr{background:var(--bg);border-radius:34px;overflow:hidden;height:560px;padding:18px 14px;display:grid;gap:10px;align-content:start;font-size:12px;line-height:1.35}
+.phone .notch{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:90px;height:22px;border-radius:12px;background:#0d1a12}
+.m-top{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.m-brand{font-family:var(--display);font-weight:800;color:var(--leaf);font-size:15px}
+.m-h{font-family:var(--display);font-weight:700;font-size:19px}
+.m-sub{color:var(--muted);font-size:11px}
+.m-card{background:var(--surface);border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(22,38,28,.06),0 4px 12px rgba(22,38,28,.06);display:grid;gap:8px}
+.m-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.m-crop{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none}
+.m-crop svg{width:18px;height:18px}
+.m-name{font-family:var(--display);font-weight:700;font-size:13px}
+.m-pill{display:inline-block;border-radius:99px;padding:2px 8px;font-weight:700;font-size:10px;background:var(--leaf-soft);color:var(--leaf)}
+.m-bars{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.m-bars i{height:5px;border-radius:9px;background:var(--line)}
+.m-bars i.on{background:var(--leaf)}
+.m-bars i.half{background:linear-gradient(90deg,var(--leaf) 30%,var(--line) 30%)}
+.m-rain{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;align-items:end;height:62px}
+.m-rain i{display:block;border-radius:5px 5px 2px 2px;background:var(--sky);opacity:.55}
+.m-rain i:last-child{opacity:1}
+.m-task{display:flex;gap:8px;align-items:center}
+.m-task b{width:14px;height:14px;border-radius:5px;border:2px solid var(--leaf);flex:none}
+.m-nav{margin-top:auto;display:flex;justify-content:space-around;align-items:center;background:var(--surface);border-radius:16px;padding:8px}
+.m-nav i{width:18px;height:18px;border-radius:6px;background:var(--line)}
+.m-nav i.on{background:var(--leaf-soft);outline:2px solid var(--leaf)}
+.m-fab{width:34px;height:34px;border-radius:11px;background:var(--leaf);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px}
+.float{position:absolute;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:14px;font-weight:700;max-width:230px}
+.float .d{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}
+.float .d svg{width:20px;height:20px}
+.float small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.f1{left:-28px;top:96px}.f2{right:-28px;bottom:110px}
+.float{max-width:205px;padding:10px 12px}
+/* seções */
+section{padding:72px 0}
+.kicker{color:var(--leaf);font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.sec-head{max-width:640px;margin-bottom:40px}
+.sec-head h2{font-size:clamp(30px,4.6vw,46px);margin:10px 0 14px}
+.sec-head p{color:var(--muted);font-size:18px}
+.feature{display:grid;gap:32px;align-items:center;padding:28px 0}
+.feature h3{font-size:clamp(24px,3.2vw,32px);margin:10px 0 12px}
+.feature p{color:var(--muted);max-width:44ch}
+.feature ul{margin:16px 0 0;padding:0;list-style:none;display:grid;gap:10px}
+.feature li{display:flex;gap:10px;align-items:flex-start;font-weight:600}
+.feature li svg{width:20px;height:20px;color:var(--leaf);flex:none;margin-top:3px}
+.panel{background:var(--surface);border-radius:28px;box-shadow:var(--shadow);padding:22px;display:grid;gap:14px;max-width:520px;width:100%;justify-self:center}
+.tl{display:grid;gap:0}
+.tl div{display:grid;grid-template-columns:18px 1fr;gap:12px;padding-bottom:12px;position:relative}
+.tl div::before{content:"";width:12px;height:12px;border-radius:50%;border:3px solid var(--line);background:var(--surface);margin-top:5px}
+.tl div::after{content:"";position:absolute;left:7px;top:22px;bottom:0;width:2px;background:var(--line)}
+.tl div:last-child::after{display:none}
+.tl .done::before{background:var(--leaf);border-color:var(--leaf)}
+.tl .now::before{border-color:var(--leaf);box-shadow:0 0 0 4px var(--leaf-soft)}
+.tl b{display:block;font-family:var(--display)}
+.tl span{font-size:14px;color:var(--muted)}
+.entry{display:flex;gap:12px;align-items:flex-start}
+.entry .d{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
+.entry .d svg{width:22px;height:22px}
+.entry b{font-family:var(--display)}
+.entry p{font-size:15px;color:var(--muted)}
+.entry small{color:var(--muted);font-size:13px;margin-left:auto;white-space:nowrap}
+.photo{height:130px;border-radius:16px;background:linear-gradient(180deg,#bfe0f2 0 38%,#9ccf73 38% 100%);position:relative;overflow:hidden}
+.photo::after{content:"";position:absolute;inset:48% 0 0 0;background:repeating-linear-gradient(90deg,#4f9a3c 0 6px,transparent 6px 16px);opacity:.75}
+.photo::before{content:"";position:absolute;width:44px;height:44px;border-radius:50%;background:var(--sun);top:14px;right:24px}
+.calc{display:grid;gap:10px}
+.calc .r{display:flex;justify-content:space-between;background:var(--bg);border-radius:12px;padding:10px 14px;font-size:15px}
+.calc .r strong{font-family:var(--display);font-variant-numeric:tabular-nums}
+.calc .res{background:var(--leaf-soft)}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:150px}
+.bars div{display:grid;gap:6px;justify-items:center;align-self:stretch;grid-template-rows:1fr auto}
+.bars i{width:100%;max-width:30px;border-radius:8px 8px 4px 4px;background:var(--sky);opacity:.55;align-self:end}
+.bars div:last-child i{opacity:1}
+.bars small{font-size:12px;color:var(--muted)}
+/* sincronização */
+.sync{background:var(--deep);color:#e8f3ec;border-radius:36px;padding:48px 24px;display:grid;gap:36px;position:relative;overflow:hidden}
+.sync h2{font-size:clamp(28px,4.4vw,44px);color:#fff}
+.sync p{color:#b9d4c3;max-width:46ch;margin-top:14px}
+.devices{display:flex;align-items:flex-end;justify-content:center;gap:18px}
+.laptop{width:min(360px,70%);aspect-ratio:16/10.5;background:#0b130e;border-radius:14px;padding:8px;position:relative}
+.laptop::after{content:"";position:absolute;left:-8%;right:-8%;bottom:-12px;height:12px;border-radius:0 0 12px 12px;background:#2c3a31}
+.laptop .s{height:100%;border-radius:8px;background:#f3f6ef;display:grid;grid-template-columns:22% 1fr;overflow:hidden}
+.laptop .sb{background:#fff;padding:8px;display:grid;gap:5px;align-content:start}
+.laptop .sb i{height:7px;border-radius:4px;background:#e2e8dc}
+.laptop .sb i:first-child{background:#1f7a4a;width:70%}
+.laptop .mn{padding:9px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start}
+.laptop .mn i{height:34px;border-radius:7px;background:#fff}
+.laptop .mn i.w{grid-column:span 2;height:46px}
+.laptop .mn i.t{height:46px}
+.mini-phone{width:84px;aspect-ratio:9/18;background:#0b130e;border-radius:16px;padding:5px}
+.mini-phone .s{height:100%;border-radius:12px;background:#f3f6ef;display:grid;gap:4px;padding:8px 6px;align-content:start}
+.mini-phone .s i{height:16px;border-radius:5px;background:#fff}
+.mini-phone .s i:first-child{height:6px;width:60%;background:#1f7a4a}
+.syncdot{position:absolute;inset:auto;display:none}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.chip{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px;color:#e8f3ec}
+/* passos */
+.steps{display:grid;gap:16px;counter-reset:passo}
+.step{background:var(--surface);border-radius:24px;box-shadow:var(--shadow);padding:24px;display:grid;gap:8px}
+.step::before{counter-increment:passo;content:counter(passo);width:40px;height:40px;border-radius:12px;background:var(--sun-soft);color:var(--soil);font-family:var(--display);font-weight:800;font-size:20px;display:grid;place-items:center;margin-bottom:6px}
+.step h3{font-size:21px}
+.step p{color:var(--muted)}
+/* perguntas */
+.faq{display:grid;gap:12px;max-width:820px}
+details{background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:0 20px}
+summary{cursor:pointer;list-style:none;padding:18px 0;font-family:var(--display);font-weight:700;font-size:18px;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--leaf);font-size:24px;line-height:1}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);padding:0 0 18px}
+/* chamada final */
+.cta{background:var(--leaf);color:#fff;border-radius:36px;padding:52px 24px;text-align:center;display:grid;gap:16px;justify-items:center;position:relative;overflow:hidden}
+.cta h2{font-size:clamp(30px,5vw,50px);max-width:16ch}
+.cta p{opacity:.9;max-width:44ch}
+.cta .btn{background:#fff;color:var(--deep)}
+.cta .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+.cta .sunball{position:absolute;width:180px;height:180px;border-radius:50%;background:var(--sun);right:-50px;top:-50px;opacity:.9}
+footer{padding:40px 0 56px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
 :focus-visible{outline:3px solid var(--sun);outline-offset:2px}
-[hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (min-width:880px){
+  .links{display:flex}
+  .hero{padding:56px 0 80px}
+  .hero .wrap{grid-template-columns:1.05fr .95fr}
+  .feature{grid-template-columns:1fr 1fr;gap:64px;padding:40px 0}
+  .feature.flip .txt{order:2}
+  .sync{grid-template-columns:1fr 1fr;padding:64px;align-items:center}
+  .steps{grid-template-columns:repeat(3,1fr)}
+  .cta{padding:72px 40px}
+}
+@media (max-width:520px){
+  .stage{min-height:600px}
+  .float{display:none}
+  .nav .btn.ghost{display:none}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="top">
-    <div class="brand" aria-label="Safra">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="23" cy="9" r="5" fill="var(--sun)"/><path d="M6 27c0-9 5-15 14-16-1 9-6 15-14 16z" fill="var(--leaf)"/><path d="M6 27c3-5 6-8 10-11" stroke="var(--surface)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="23" cy="9" r="5" fill="var(--sun)"/><path d="M6 27c0-9 5-15 14-16-1 9-6 15-14 16z" fill="var(--leaf)"/><path d="M6 27c3-5 6-8 10-11" stroke="var(--bg)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
       Safra
+    </a>
+    <nav class="links" aria-label="Seções">
+      <a href="#funcoes">Funções</a>
+      <a href="#sincronizacao">Celular e PC</a>
+      <a href="#comecar">Como começar</a>
+      <a href="#perguntas">Perguntas</a>
+    </nav>
+    <div style="display:flex;gap:10px">
+      <a class="btn ghost sm" href="app/">Entrar</a>
+      <a class="btn sm" href="app/#criar">Criar conta</a>
     </div>
-    <button class="iconbtn" id="btnSettings" aria-label="Configurações">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-    </button>
-  </header>
-  <main id="view"></main>
-</div>
-
-<nav class="bottom" aria-label="Navegação principal">
-  <div class="in">
-    <button class="tab" data-tab="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
-    <button class="tab" data-tab="talhoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>Talhões</button>
-    <button class="fab" id="fab" aria-label="Novo registro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-    <button class="tab" data-tab="diario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Diário</button>
-    <button class="tab" data-tab="ferramentas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>Ferramentas</button>
   </div>
-</nav>
+</header>
 
-<div class="sheet-wrap" id="sheetWrap" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-  <div class="sheet" id="sheet"></div>
-</div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Grátis · no celular e no computador</span>
+      <h1>Seu caderno de campo, <em>no bolso.</em></h1>
+      <p class="lead">Acompanhe cada talhão do plantio à colheita, anote o manejo com fotos e faça as contas do campo sem papel.</p>
+      <div class="ctas">
+        <a class="btn" href="app/#criar">Criar conta grátis</a>
+        <a class="btn ghost" href="app/">Abrir o app</a>
+      </div>
+      <div class="trust"><span>Funciona sem instalar</span><span>Dados salvos na nuvem</span><span>Feito para o produtor</span></div>
+    </div>
 
-<script>
-(function(){
-"use strict";
-var KEY = "safra-v1";
-var DAY = 86400000;
+    <div class="stage" aria-label="Tela inicial do app Safra">
+      <div class="sunball"></div>
+      <div class="field"></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="scr">
+          <div class="m-top"><span class="m-brand">Safra</span><span class="m-pill">Sincronizado</span></div>
+          <div><div class="m-h">Bom dia, Bruno</div><div class="m-sub">2 tarefas pedem sua atenção hoje.</div></div>
+          <div class="m-card">
+            <div class="m-row" style="justify-content:flex-start"><span class="m-crop" style="background:var(--leaf-soft);color:var(--leaf)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21v-9"/><path d="M12 12c0-4-3-7-8-7 0 4 3 7 8 7zM12 12c0-3 2-6 7-6 0 3-2 6-7 6z"/></svg></span><div><div class="m-name">Talhão da Baixada</div><div class="m-sub">Soja · 12,5 ha</div></div></div>
+            <span class="m-pill">Florescimento</span>
+            <div class="m-bars"><i class="on"></i><i class="on"></i><i class="half"></i><i></i><i></i></div>
+            <div class="m-row m-sub"><span>Dia 58 de 120</span><span>Colheita 13 jan</span></div>
+          </div>
+          <div class="m-card">
+            <div class="m-row"><span class="m-name">Chuva da semana</span><span class="m-sub"><b style="color:var(--ink);font-size:14px">55</b> mm</span></div>
+            <div class="m-rain"><i style="height:30%"></i><i style="height:4%"></i><i style="height:85%"></i><i style="height:16%"></i><i style="height:4%"></i><i style="height:60%"></i><i style="height:26%"></i></div>
+          </div>
+          <div class="m-card">
+            <div class="m-task"><b></b><span><strong>Monitorar percevejo</strong><br><span class="m-sub">Talhão da Baixada · hoje</span></span></div>
+            <div class="m-task"><b></b><span><strong>2ª adubação de cobertura</strong><br><span class="m-sub">Talhão do Pivô · em 2 dias</span></span></div>
+          </div>
+          <div class="m-nav"><i class="on"></i><i></i><span class="m-fab">+</span><i></i><i></i></div>
+        </div>
+      </div>
+      <div class="float f1"><span class="d" style="background:var(--sky-soft);color:var(--sky)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1 .5-8 5 5 0 0 1 9.6 1.5A3.5 3.5 0 0 1 17 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/></svg></span><span>22 mm de chuva<small>lançado no domingo</small></span></div>
+      <div class="float f2"><span class="d" style="background:var(--sun-soft);color:var(--soil)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c-3 0-5-2-5-5 3 0 5 2 5 5zM12 9c3 0 5-2 5-5-3 0-5 2-5 5zM12 14c-3 0-5-2-5-5 3 0 5 2 5 5zM12 14c3 0 5-2 5-5-3 0-5 2-5 5z"/></svg></span><span>Colheita em 62 dias<small>Soja · Talhão da Baixada</small></span></div>
+    </div>
+  </div>
+</section>
 
-/* ---------- culturas e fases ---------- */
-var CROPS = {
-  "Soja":      {ciclo:120, cor:"leaf", fases:["Emergência","Vegetativo","Florescimento","Enchimento de grãos","Maturação"]},
-  "Milho":     {ciclo:135, cor:"sun",  fases:["Emergência","Vegetativo","Pendoamento","Enchimento de grãos","Maturação"]},
-  "Feijão":    {ciclo:90,  cor:"soil", fases:["Emergência","Vegetativo","Florescimento","Formação de vagens","Maturação"]},
-  "Trigo":     {ciclo:120, cor:"sun",  fases:["Emergência","Perfilhamento","Espigamento","Enchimento de grãos","Maturação"]},
-  "Algodão":   {ciclo:160, cor:"sky",  fases:["Emergência","Vegetativo","Botão floral","Abertura de capulhos","Maturação"]},
-  "Tomate":    {ciclo:110, cor:"soil", fases:["Pegamento","Vegetativo","Florescimento","Frutificação","Colheita"]},
-  "Alface":    {ciclo:45,  cor:"leaf", fases:["Pegamento","Folhas iniciais","Expansão","Formação da cabeça","Ponto de colheita"]},
-  "Mandioca":  {ciclo:300, cor:"soil", fases:["Brotação","Crescimento","Tuberização","Acúmulo de amido","Maturação"]}
-};
-var PCT = [0,.08,.45,.62,.85]; // início de cada fase em fração do ciclo
+<section id="funcoes">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Funções</span>
+      <h2>Tudo o que acontece na lavoura, num lugar só</h2>
+      <p>Sem planilha esquecida no computador nem caderno molhado na caminhonete.</p>
+    </div>
 
-var TYPES = {
-  irrigacao:  {nome:"Irrigação",   cor:"sky",  unid:"mm"},
-  adubacao:   {nome:"Adubação",    cor:"soil", unid:"kg/ha"},
-  pulverizacao:{nome:"Pulverização",cor:"sun", unid:"L/ha"},
-  chuva:      {nome:"Chuva",       cor:"sky",  unid:"mm"},
-  observacao: {nome:"Observação",  cor:"leaf", unid:""},
-  colheita:   {nome:"Colheita",    cor:"sun",  unid:"sc/ha"}
-};
+    <div class="feature">
+      <div class="txt">
+        <span class="kicker">Talhões</span>
+        <h3>Saiba em que fase está cada talhão</h3>
+        <p>Cadastre a cultura, a área e a data de plantio. O Safra mostra a fase atual, os dias de lavoura e a previsão de colheita.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Soja, milho, feijão, trigo, algodão, tomate, alface e mandioca</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Linha do tempo do plantio à colheita</li>
+        </ul>
+      </div>
+      <div class="panel" aria-label="Exemplo de linha do tempo do talhão">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:var(--display);font-size:20px">Talhão da Baixada</b><span class="m-pill" style="font-size:13px;padding:4px 10px">Dia 58 de 120</span></div>
+        <div class="tl">
+          <div class="done"><span><b>Emergência</b><span>a partir de 15 set</span></span></div>
+          <div class="done"><span><b>Vegetativo</b><span>a partir de 25 set</span></span></div>
+          <div class="now"><span><b>Florescimento</b><span>a partir de 8 nov · fase atual</span></span></div>
+          <div><span><b>Enchimento de grãos</b><span>a partir de 28 nov</span></span></div>
+          <div><span><b>Maturação</b><span>a partir de 26 dez</span></span></div>
+        </div>
+      </div>
+    </div>
 
-var ICON = {
-  irrigacao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg>',
-  chuva:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1 .5-8 5 5 0 0 1 9.6 1.5A3.5 3.5 0 0 1 17 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/></svg>',
-  adubacao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 13H7z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/><path d="M10 13h4"/></svg>',
-  pulverizacao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="9" width="8" height="12" rx="2"/><path d="M10 9V6h4v3M14 6h3l2-2M19 8h2M19 11l2 1M18 5l1-2"/></svg>',
-  observacao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
-  colheita:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c-3 0-5-2-5-5 3 0 5 2 5 5zM12 9c3 0 5-2 5-5-3 0-5 2-5 5zM12 14c-3 0-5-2-5-5 3 0 5 2 5 5zM12 14c3 0 5-2 5-5-3 0-5 2-5 5z"/></svg>',
-  sprout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4-3-7-8-7 0 4 3 7 8 7zM12 12c0-3 2-6 7-6 0 3-2 6-7 6z"/></svg>',
-  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
-  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>'
-};
+    <div class="feature flip">
+      <div class="txt">
+        <span class="kicker">Diário de campo</span>
+        <h3>Anote o manejo com foto, na hora</h3>
+        <p>Irrigação, adubação, pulverização, chuva, observações e colheita. Cada registro fica com data, talhão, quantidade e foto.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Filtros por tipo de registro</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Histórico completo de cada talhão</li>
+        </ul>
+      </div>
+      <div class="panel" aria-label="Exemplo de registro no diário">
+        <div class="entry"><span class="d" style="background:var(--leaf-soft);color:var(--leaf)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><div><b>Observação</b><p>Plantas uniformes, folhas bem verdes. Nenhum sinal de lagarta na bordadura.</p></div><small>11 nov</small></div>
+        <div class="photo" role="img" aria-label="Ilustração de foto da lavoura"></div>
+        <div class="entry"><span class="d" style="background:var(--sun-soft);color:var(--soil)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="9" width="8" height="12" rx="2"/><path d="M10 9V6h4v3M14 6h3l2-2M19 8h2M19 11l2 1M18 5l1-2"/></svg></span><div><b>Pulverização · 150 L/ha</b><p>Fungicida preventivo. Vento fraco, fim de tarde.</p></div><small>8 nov</small></div>
+      </div>
+    </div>
 
-/* ---------- utilidades ---------- */
-function $(s,r){return (r||document).querySelector(s);}
-function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-function uid(){return Math.random().toString(36).slice(2,10);}
-function today0(){var d=new Date();d.setHours(0,0,0,0);return d;}
-function iso(d){var z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10);}
-function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
-function addDays(s,n){var d=parse(s);d.setDate(d.getDate()+n);return iso(d);}
-function diff(a,b){return Math.round((parse(a)-parse(b))/DAY);}
-var MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-var SEM=["dom","seg","ter","qua","qui","sex","sáb"];
-function fmt(s){var d=parse(s);return d.getDate()+" "+MES[d.getMonth()];}
-function rel(s){var n=diff(s,iso(today0()));if(n===0)return "hoje";if(n===-1)return "ontem";if(n===1)return "amanhã";if(n<0)return "há "+(-n)+" dias";return "em "+n+" dias";}
-function num(v,d){return Number(v).toLocaleString("pt-BR",{maximumFractionDigits:d==null?1:d});}
+    <div class="feature">
+      <div class="txt">
+        <span class="kicker">Chuva e tarefas</span>
+        <h3>Pluviômetro e lembretes na tela inicial</h3>
+        <p>Lance a chuva do dia e veja o total da semana. As tarefas atrasadas aparecem em destaque para nada passar.</p>
+      </div>
+      <div class="panel" aria-label="Exemplo de gráfico de chuva da semana">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--display);font-size:34px;font-weight:700">55 <small style="font-size:15px;color:var(--muted)">mm em 7 dias</small></span><span class="m-pill" style="background:var(--sky-soft);color:var(--sky);font-size:13px;padding:4px 10px">Pluviômetro</span></div>
+        <div class="bars">
+          <div><i style="height:36%"></i><small>sex</small></div><div><i style="height:3%"></i><small>sáb</small></div><div><i style="height:100%"></i><small>dom</small></div><div><i style="height:18%"></i><small>seg</small></div><div><i style="height:3%"></i><small>ter</small></div><div><i style="height:68%"></i><small>qua</small></div><div><i style="height:27%"></i><small>hoje</small></div>
+        </div>
+      </div>
+    </div>
 
-/* ---------- dados ---------- */
-function seed(){
-  var t=iso(today0());
-  var A=uid(),B=uid(),C=uid();
-  var reg=[];
-  function r(tal,tipo,dd,valor,nota){reg.push({id:uid(),talhao:tal,tipo:tipo,data:addDays(t,dd),valor:valor,nota:nota,foto:""});}
-  r(A,"observacao",-1,"","Plantas uniformes, folhas bem verdes. Nenhum sinal de lagarta na bordadura.");
-  r(A,"pulverizacao",-4,150,"Fungicida preventivo para ferrugem. Vento fraco, fim de tarde.");
-  r(B,"adubacao",-6,120,"Cobertura com ureia antes da chuva prevista.");
-  r(C,"irrigacao",-2,12,"Gotejamento por 2 h. Solo estava seco na camada de cima.");
-  r(A,"observacao",-12,"","Início do florescimento em alguns pontos do talhão.");
-  r(C,"colheita",-9,0,"Primeira leva colhida para a feira de sábado.");
-  var chuva=[[-6,8],[-5,0],[-4,22],[-3,4],[-2,0],[-1,15],[0,6]];
-  chuva.forEach(function(c){reg.push({id:uid(),talhao:"",tipo:"chuva",data:addDays(t,c[0]),valor:c[1],nota:"",foto:""});});
-  return {
-    nome:"Bruno",
-    talhoes:[
-      {id:A,nome:"Talhão da Baixada",cultura:"Soja",variedade:"Cultivar precoce",area:12.5,plantio:addDays(t,-58)},
-      {id:B,nome:"Talhão do Pivô",cultura:"Milho",variedade:"Híbrido safrinha",area:8,plantio:addDays(t,-31)},
-      {id:C,nome:"Horta da Sede",cultura:"Tomate",variedade:"Italiano",area:.3,plantio:addDays(t,-84)}
-    ],
-    registros:reg,
-    lembretes:[
-      {id:uid(),talhao:A,texto:"Monitorar percevejo (pano de batida)",data:t,feito:false},
-      {id:uid(),talhao:B,texto:"Segunda adubação de cobertura",data:addDays(t,2),feito:false},
-      {id:uid(),talhao:C,texto:"Amarrar tomateiro na fileira 3",data:addDays(t,-1),feito:false}
-    ],
-    checklist:[
-      {t:"Análise de solo feita há menos de 1 ano",ok:true},
-      {t:"Calagem e gessagem aplicadas conforme a análise",ok:true},
-      {t:"Sementes compradas e com germinação conferida",ok:false},
-      {t:"Plantadeira regulada (sementes por metro)",ok:false},
-      {t:"Tratamento de sementes programado",ok:false},
-      {t:"Previsão de chuva conferida para a semana do plantio",ok:false}
-    ]
-  };
-}
-var S;
-function load(){try{var j=localStorage.getItem(KEY);if(j){S=JSON.parse(j);return;}}catch(e){}S=seed();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
-load();
+    <div class="feature flip">
+      <div class="txt">
+        <span class="kicker">Ferramentas</span>
+        <h3>As contas do campo, prontas</h3>
+        <p>Calda de pulverização, adubação, população de plantas e conversor de alqueire, hectare e tarefa. Mais um checklist pré-plantio.</p>
+      </div>
+      <div class="panel calc" aria-label="Exemplo da calculadora de calda">
+        <b style="font-family:var(--display);font-size:20px">Calda de pulverização</b>
+        <div class="r"><span>Área</span><strong>10 ha</strong></div>
+        <div class="r"><span>Volume de calda</span><strong>150 L/ha</strong></div>
+        <div class="r"><span>Tanque</span><strong>2.000 L</strong></div>
+        <div class="r res"><span>Cada tanque cobre</span><strong>13,33 ha</strong></div>
+        <div class="r res"><span>Produto por tanque</span><strong>6,67 L</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-function talhao(id){for(var i=0;i<S.talhoes.length;i++)if(S.talhoes[i].id===id)return S.talhoes[i];return null;}
-function progress(t){
-  var c=CROPS[t.cultura]||{ciclo:120,fases:CROPS.Soja.fases};
-  var dia=diff(iso(today0()),t.plantio);
-  var f=Math.max(0,Math.min(1,dia/c.ciclo));
-  var fase=0;for(var i=0;i<PCT.length;i++)if(f>=PCT[i])fase=i;
-  return {dia:dia,ciclo:c.ciclo,frac:f,fase:fase,nomeFase:c.fases[fase],fases:c.fases,colheita:addDays(t.plantio,c.ciclo),falta:c.ciclo-dia};
-}
-function cropColor(t){return (CROPS[t.cultura]||{cor:"leaf"}).cor;}
+<section id="sincronizacao">
+  <div class="wrap">
+    <div class="sync">
+      <div>
+        <span class="kicker" style="color:var(--sun)">Celular e computador</span>
+        <h2>Anote no campo, confira no escritório</h2>
+        <p>Com uma conta, tudo o que você registra no celular aparece no computador, e o contrário também. Sem internet na roça, o Safra guarda no aparelho e envia quando o sinal voltar.</p>
+        <div class="chips"><span class="chip">Login com e-mail</span><span class="chip">Fotos guardadas na nuvem</span><span class="chip">Funciona offline</span><span class="chip">Modo claro e escuro</span></div>
+      </div>
+      <div class="devices" aria-label="O mesmo app no computador e no celular">
+        <div class="laptop"><div class="s"><div class="sb"><i></i><i></i><i></i><i></i><i></i></div><div class="mn"><i></i><i></i><i></i><i class="w"></i><i class="t"></i></div></div></div>
+        <div class="mini-phone"><div class="s"><i></i><i></i><i></i><i></i></div></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-/* ---------- componentes ---------- */
-function stagesBar(p){
-  var h='<div class="stages" aria-hidden="true">';
-  for(var i=0;i<5;i++){
-    var a=PCT[i],b=i<4?PCT[i+1]:1,w=Math.max(0,Math.min(1,(p.frac-a)/(b-a)));
-    h+='<i><b style="width:'+(w*100).toFixed(0)+'%"></b></i>';
-  }
-  return h+'</div>';
-}
-function plotCard(t){
-  var p=progress(t),c=cropColor(t);
-  var status=p.falta<=0?'<span class="pill sun">Pronto para colher</span>':'<span class="pill leaf">'+esc(p.nomeFase)+'</span>';
-  return '<button class="card plot" data-open="'+t.id+'">'+
-    '<div class="plot-head"><div class="crop" style="background:var(--'+c+'-soft);color:var(--'+c+')">'+ICON.sprout+'</div>'+
-    '<div><div class="plot-name">'+esc(t.nome)+'</div><div class="plot-sub">'+esc(t.cultura)+' · '+num(t.area)+' ha</div></div></div>'+
-    status+stagesBar(p)+
-    '<div class="meta"><span>Dia <strong>'+Math.max(p.dia,0)+'</strong> de '+p.ciclo+'</span><span>'+(p.falta>0?'Colheita <strong>'+fmt(p.colheita)+'</strong>':'Ciclo concluído')+'</span></div>'+
-  '</button>';
-}
-function entryHTML(r){
-  var ty=TYPES[r.tipo]||TYPES.observacao,t=talhao(r.talhao);
-  var val=(r.valor!==""&&r.valor!=null&&ty.unid&&Number(r.valor)>0)?' · '+num(r.valor)+' '+ty.unid:'';
-  return '<div class="card entry"><div class="dot" style="background:var(--'+ty.cor+'-soft);color:var(--'+(ty.cor==="sun"?"soil":ty.cor)+')">'+ICON[r.tipo]+'</div>'+
-    '<div class="entry-body"><div class="entry-top"><div class="entry-title">'+esc(ty.nome)+esc(val)+'</div><div class="entry-date">'+fmt(r.data)+'</div></div>'+
-    '<div class="ts">'+(t?esc(t.nome):"Toda a propriedade")+'</div>'+
-    (r.nota?'<p class="entry-note">'+esc(r.nota)+'</p>':'')+
-    (r.foto?'<img src="'+r.foto+'" alt="Foto do registro de '+esc(ty.nome.toLowerCase())+'">':'')+
-  '</div></div>';
-}
-function taskHTML(l){
-  var t=talhao(l.talhao),n=diff(l.data,iso(today0()));
-  var when=n<0&&!l.feito?'<span class="late">Atrasado · '+rel(l.data)+'</span>':rel(l.data);
-  return '<div class="task'+(l.feito?' done':'')+'"><button class="check'+(l.feito?' on':'')+'" data-task="'+l.id+'" aria-label="'+(l.feito?'Desmarcar':'Marcar como feito')+': '+esc(l.texto)+'">'+(l.feito?ICON.check:'')+'</button>'+
-    '<div><div class="tt">'+esc(l.texto)+'</div><div class="ts">'+(t?esc(t.nome)+' · ':'')+when+'</div></div></div>';
-}
+<section id="comecar">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Como começar</span>
+      <h2>Em três passos você já está anotando</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Crie sua conta</h3><p>Só e-mail e senha. Confirme pelo link que chega no seu e-mail.</p></div>
+      <div class="step"><h3>Cadastre os talhões</h3><p>Nome, cultura, área e data de plantio. A previsão de colheita sai na hora.</p></div>
+      <div class="step"><h3>Registre o dia a dia</h3><p>Toque no botão verde + e anote o que fez ou viu, com foto se quiser.</p></div>
+    </div>
+  </div>
+</section>
 
-/* ---------- telas ---------- */
-var tab="inicio",detail=null,filtro="todos";
-function render(){
-  document.querySelectorAll(".tab").forEach(function(b){b.setAttribute("aria-current",b.dataset.tab===tab&&!detail?"page":"false");});
-  var v=$("#view");
-  if(detail){v.innerHTML=viewDetail(talhao(detail));return;}
-  v.innerHTML={inicio:viewHome,talhoes:viewPlots,diario:viewDiary,ferramentas:viewTools}[tab]();
-  window.scrollTo(0,0);
-}
-function rainWeek(){
-  var t=today0(),days=[];
-  for(var i=6;i>=0;i--){var d=new Date(t.getTime()-i*DAY);days.push({iso:iso(d),dia:SEM[d.getDay()],mm:0});}
-  S.registros.forEach(function(r){if(r.tipo!=="chuva")return;days.forEach(function(d){if(d.iso===r.data)d.mm+=Number(r.valor)||0;});});
-  return days;
-}
-function viewHome(){
-  var h=new Date().getHours(),saud=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
-  var pend=S.lembretes.filter(function(l){return !l.feito&&diff(l.data,iso(today0()))<=0;}).length;
-  var w=rainWeek(),tot=w.reduce(function(a,d){return a+d.mm;},0),mx=Math.max(10,Math.max.apply(null,w.map(function(d){return d.mm;})));
-  var bars=w.map(function(d,i){return '<div class="bar"><span style="height:'+(d.mm/mx*100).toFixed(0)+'%;'+(i===6?'':'opacity:.55')+'"></span><em>'+(d.mm?num(d.mm,0):'')+'</em><small>'+(i===6?'hoje':d.dia)+'</small></div>';}).join("");
-  var tasks=S.lembretes.slice().sort(function(a,b){return (a.feito-b.feito)||(a.data<b.data?-1:1);}).slice(0,4);
-  var recent=S.registros.filter(function(r){return r.tipo!=="chuva";}).sort(function(a,b){return a.data<b.data?1:-1;}).slice(0,2);
-  return '<section class="hello"><h1>'+saud+', '+esc(S.nome)+'</h1><p>'+(pend?pend+(pend>1?' tarefas pedem':' tarefa pede')+' sua atenção hoje.':'Tudo em dia na lavoura. Bom trabalho!')+'</p></section>'+
-    '<div class="section"><h2>Seus talhões</h2><button class="link" data-go="talhoes">Ver todos</button></div>'+
-    (S.talhoes.length?'<div class="scroller">'+S.talhoes.map(plotCard).join("")+'</div>':'<div class="card empty">Cadastre seu primeiro talhão para acompanhar a safra.<br><br><button class="btn" data-new-plot>Adicionar talhão</button></div>')+
-    '<div class="section"><h2>Chuva da semana</h2><button class="link" data-add="chuva">Lançar chuva</button></div>'+
-    '<div class="card"><div class="rain-head"><div class="big">'+num(tot,0)+' <small>mm em 7 dias</small></div><span class="pill sky">Pluviômetro</span></div><div class="rain" role="img" aria-label="Chuva por dia nos últimos 7 dias, total '+num(tot,0)+' milímetros">'+bars+'</div></div>'+
-    '<div class="section"><h2>Tarefas</h2><button class="link" data-new-task>Nova tarefa</button></div>'+
-    '<div class="card">'+(tasks.length?tasks.map(taskHTML).join(""):'<div class="empty">Nenhuma tarefa por enquanto.</div>')+'</div>'+
-    '<div class="section"><h2>Últimos registros</h2><button class="link" data-go="diario">Abrir diário</button></div>'+
-    '<div class="stack">'+(recent.length?recent.map(entryHTML).join(""):'<div class="card empty">Seu diário está vazio.</div>')+'</div>';
-}
-function viewPlots(){
-  var area=S.talhoes.reduce(function(a,t){return a+Number(t.area||0);},0);
-  return '<section class="hello"><h1>Talhões</h1><p>'+S.talhoes.length+' talhões · '+num(area)+' ha cultivados</p></section>'+
-    '<div class="stack">'+S.talhoes.map(plotCard).join("")+'</div>'+
-    '<div style="margin-top:14px"><button class="btn ghost" data-new-plot>+ Adicionar talhão</button></div>';
-}
-function viewDiary(){
-  var types=["todos"].concat(Object.keys(TYPES));
-  var chips=types.map(function(k){return '<button class="chip" data-filter="'+k+'" aria-pressed="'+(filtro===k)+'">'+(k==="todos"?"Todos":TYPES[k].nome)+'</button>';}).join("");
-  var list=S.registros.filter(function(r){return filtro==="todos"||r.tipo===filtro;}).sort(function(a,b){return a.data<b.data?1:a.data>b.data?-1:0;});
-  return '<section class="hello"><h1>Diário de campo</h1><p>Tudo o que aconteceu na lavoura, em ordem.</p></section>'+
-    '<div class="chips" role="toolbar" aria-label="Filtrar por tipo">'+chips+'</div>'+
-    '<div class="stack" style="margin-top:12px">'+(list.length?list.map(entryHTML).join(""):'<div class="card empty">Nenhum registro deste tipo ainda.</div>')+'</div>';
-}
-function viewTools(){
-  var done=S.checklist.filter(function(c){return c.ok;}).length;
-  function tool(id,cor,ic,t,d){return '<button class="card tool" data-tool="'+id+'"><div class="dot" style="background:var(--'+cor+'-soft);color:var(--'+(cor==="sun"?"soil":cor)+')">'+ic+'</div><div><h3>'+t+'</h3><p>'+d+'</p></div></button>';}
-  return '<section class="hello"><h1>Ferramentas</h1><p>Contas do campo sem precisar de papel.</p></section>'+
-    '<div class="tools">'+
-      tool("calda","sun",ICON.pulverizacao,"Calda de pulverização","Tanques e produto por tanque")+
-      tool("adubo","soil",ICON.adubacao,"Adubação","Total de adubo e sacos")+
-      tool("populacao","leaf",ICON.sprout,"População de plantas","Plantas por hectare")+
-      tool("area","sky",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 12h16M12 4v16"/></svg>',"Conversor de área","Alqueire, hectare e m²")+
-    '</div>'+
-    '<div class="section"><h2>Checklist pré-plantio</h2><span class="pill leaf">'+done+' de '+S.checklist.length+'</span></div>'+
-    '<div class="card">'+S.checklist.map(function(c,i){return '<div class="task'+(c.ok?' done':'')+'"><button class="check'+(c.ok?' on':'')+'" data-ck="'+i+'" aria-label="'+esc(c.t)+'">'+(c.ok?ICON.check:'')+'</button><div class="tt">'+esc(c.t)+'</div></div>';}).join("")+'</div>';
-}
-function viewDetail(t){
-  if(!t){detail=null;return viewPlots();}
-  var p=progress(t),c=cropColor(t);
-  var regs=S.registros.filter(function(r){return r.talhao===t.id;}).sort(function(a,b){return a.data<b.data?1:-1;});
-  var tl=p.fases.map(function(f,i){
-    var st=i<p.fase||p.falta<=0?"done":i===p.fase?"now":"";
-    var ini=addDays(t.plantio,Math.round(PCT[i]*p.ciclo));
-    return '<div class="tl '+st+'"><div class="ln"><i></i>'+(i<4?'<u></u>':'')+'</div><div class="tx"><b>'+esc(f)+'</b><span>a partir de '+fmt(ini)+(st==="now"?' · fase atual':'')+'</span></div></div>';
-  }).join("");
-  return '<div class="detail-hero">'+
-    '<div style="display:flex;align-items:center;gap:10px"><button class="iconbtn" data-back aria-label="Voltar">'+ICON.back+'</button><span class="plot-sub">Talhões</span></div>'+
-    '<div class="plot-head"><div class="crop" style="background:var(--'+c+'-soft);color:var(--'+c+');width:60px;height:60px">'+ICON.sprout+'</div>'+
-    '<div><h1 style="font-size:26px">'+esc(t.nome)+'</h1><div class="plot-sub">'+esc(t.cultura)+(t.variedade?' · '+esc(t.variedade):'')+'</div></div></div>'+
-    '<div class="stats"><div class="stat"><b>'+Math.max(p.dia,0)+'</b><span>dias de plantio</span></div><div class="stat"><b>'+(p.falta>0?p.falta:0)+'</b><span>dias p/ colheita</span></div><div class="stat"><b>'+num(t.area)+'</b><span>hectares</span></div></div>'+
-    '<div class="card">'+stagesBar(p)+'<div class="stage-labels" style="margin-top:6px"><span>Plantio '+fmt(t.plantio)+'</span><span>Colheita '+fmt(p.colheita)+'</span></div></div>'+
-    '<div class="card"><h2 style="font-size:18px;margin-bottom:12px">Do plantio à colheita</h2><div class="timeline">'+tl+'</div></div>'+
-  '</div>'+
-  '<div class="section"><h2>Registros do talhão</h2><button class="link" data-add-for="'+t.id+'">+ Registrar</button></div>'+
-  '<div class="stack">'+(regs.length?regs.map(entryHTML).join(""):'<div class="card empty">Nada registrado neste talhão ainda.</div>')+'</div>'+
-  '<div style="margin-top:16px;display:grid;gap:10px"><button class="btn ghost" data-edit-plot="'+t.id+'">Editar talhão</button><button class="btn danger" data-del-plot="'+t.id+'">Excluir talhão</button></div>';
-}
+<section id="perguntas">
+  <div class="wrap">
+    <div class="sec-head"><span class="kicker">Perguntas</span><h2>Dúvidas comuns</h2></div>
+    <div class="faq">
+      <details><summary>Preciso instalar alguma coisa?</summary><p>Não. O Safra abre pelo navegador. No celular, use "Adicionar à tela inicial" no menu do navegador e ele ganha um ícone como qualquer app.</p></details>
+      <details><summary>Funciona sem internet?</summary><p>Funciona. O que você anotar fica guardado no aparelho e é enviado para a sua conta quando a internet voltar. Só o primeiro acesso precisa de conexão.</p></details>
+      <details><summary>Quanto custa?</summary><p>Nada. O Safra é gratuito.</p></details>
+      <details><summary>Posso usar sem criar conta?</summary><p>Pode. Escolha "Usar sem conta" na tela de entrada. Os dados ficam só naquele aparelho. Se criar uma conta depois, o que já estava lá vai junto.</p></details>
+      <details><summary>Meus dados ficam protegidos?</summary><p>Cada conta só enxerga os próprios talhões, registros e fotos. Ninguém mais tem acesso, nem outros usuários do Safra.</p></details>
+    </div>
+  </div>
+</section>
 
-/* ---------- folhas (modais) ---------- */
-function openSheet(title,html,onMount){
-  $("#sheet").innerHTML='<div class="grab"></div><div class="sheet-head"><h2 id="sheetTitle">'+title+'</h2><button class="iconbtn" data-close aria-label="Fechar">'+ICON.close+'</button></div>'+html;
-  $("#sheetWrap").classList.add("open");
-  if(onMount)onMount($("#sheet"));
-  var f=$("#sheet input, #sheet select, #sheet textarea");if(f)setTimeout(function(){try{f.focus({preventScroll:true});}catch(e){}},50);
-}
-function closeSheet(){$("#sheetWrap").classList.remove("open");$("#sheet").innerHTML="";}
-function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove("show");},2000);}
-function plotOptions(sel,allowAll){return (allowAll?'<option value="">Toda a propriedade</option>':'')+S.talhoes.map(function(t){return '<option value="'+t.id+'"'+(t.id===sel?' selected':'')+'>'+esc(t.nome)+'</option>';}).join("");}
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <div class="sunball"></div>
+      <h2>Comece a próxima safra organizado</h2>
+      <p>Crie sua conta grátis e cadastre o primeiro talhão hoje.</p>
+      <div class="ctas" style="justify-content:center;margin-top:8px"><a class="btn" href="app/#criar">Criar conta grátis</a><a class="btn ghost" href="app/">Já tenho conta</a></div>
+    </div>
+  </div>
+</section>
+</main>
 
-function sheetRecord(tipo,tal){
-  tipo=tipo||"observacao";
-  var chips=Object.keys(TYPES).map(function(k){return '<button type="button" class="chip" data-type="'+k+'" aria-pressed="'+(k===tipo)+'">'+ICON[k]+TYPES[k].nome+'</button>';}).join("");
-  openSheet("Novo registro",
-    '<form id="fRec" class="stack">'+
-    '<div class="chips" role="radiogroup" aria-label="Tipo de registro">'+chips+'</div>'+
-    '<div class="row"><label for="rData">Data<input class="field" type="date" id="rData" value="'+iso(today0())+'" required></label>'+
-    '<label for="rValor" id="lValor">Quantidade<input class="field" type="number" inputmode="decimal" step="any" min="0" id="rValor" placeholder="0"></label></div>'+
-    '<label for="rTal">Talhão<select class="field" id="rTal">'+plotOptions(tal,true)+'</select></label>'+
-    '<label for="rNota">Anotação<textarea class="field" id="rNota" placeholder="O que você fez ou viu no campo?"></textarea></label>'+
-    '<label for="rFoto">Foto (opcional)<input class="field" type="file" accept="image/*" id="rFoto"></label>'+
-    '<button class="btn" type="submit">Salvar no diário</button></form>',
-    function(root){
-      var cur=tipo;
-      function sync(){var u=TYPES[cur].unid;$("#lValor").firstChild.nodeValue=u?"Quantidade ("+u+")":"Quantidade";$("#rValor").disabled=!u;}
-      sync();
-      root.querySelectorAll("[data-type]").forEach(function(b){b.onclick=function(){cur=b.dataset.type;root.querySelectorAll("[data-type]").forEach(function(x){x.setAttribute("aria-pressed",x===b);});sync();};});
-      $("#fRec").onsubmit=function(e){
-        e.preventDefault();
-        var file=$("#rFoto").files[0];
-        function done(foto){
-          S.registros.push({id:uid(),tipo:cur,data:$("#rData").value||iso(today0()),valor:$("#rValor").value===""?"":Number($("#rValor").value),talhao:$("#rTal").value,nota:$("#rNota").value.trim(),foto:foto||""});
-          save();closeSheet();render();toast("Registro salvo no diário");
-        }
-        if(file)shrink(file,done);else done("");
-      };
-    });
-}
-function shrink(file,cb){
-  var rd=new FileReader();
-  rd.onload=function(){var img=new Image();img.onload=function(){
-    var s=Math.min(1,900/Math.max(img.width,img.height)),cv=document.createElement("canvas");
-    cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
-    try{cb(cv.toDataURL("image/jpeg",.72));}catch(e){cb("");}
-  };img.onerror=function(){cb("");};img.src=rd.result;};
-  rd.onerror=function(){cb("");};rd.readAsDataURL(file);
-}
-function sheetPlot(id){
-  var t=id?talhao(id):{nome:"",cultura:"Soja",variedade:"",area:"",plantio:iso(today0())};
-  var opts=Object.keys(CROPS).map(function(k){return '<option'+(k===t.cultura?' selected':'')+'>'+k+'</option>';}).join("");
-  openSheet(id?"Editar talhão":"Novo talhão",
-    '<form id="fPlot" class="stack">'+
-    '<label for="pNome">Nome do talhão<input class="field" id="pNome" required value="'+esc(t.nome)+'" placeholder="Ex.: Talhão da Represa"></label>'+
-    '<div class="row"><label for="pCult">Cultura<select class="field" id="pCult">'+opts+'</select></label>'+
-    '<label for="pArea">Área (ha)<input class="field" type="number" inputmode="decimal" step="any" min="0" id="pArea" required value="'+esc(t.area)+'"></label></div>'+
-    '<label for="pVar">Variedade ou híbrido<input class="field" id="pVar" value="'+esc(t.variedade)+'" placeholder="Opcional"></label>'+
-    '<label for="pData">Data do plantio<input class="field" type="date" id="pData" required value="'+esc(t.plantio)+'"></label>'+
-    '<p class="hint" id="pHint"></p>'+
-    '<button class="btn" type="submit">'+(id?"Salvar alterações":"Adicionar talhão")+'</button></form>',
-    function(){
-      function hint(){var c=CROPS[$("#pCult").value];var d=$("#pData").value;$("#pHint").textContent=c&&d?"Ciclo médio de "+c.ciclo+" dias. Colheita prevista para "+fmt(addDays(d,c.ciclo))+".":"";}
-      $("#pCult").onchange=hint;$("#pData").oninput=hint;hint();
-      $("#fPlot").onsubmit=function(e){
-        e.preventDefault();
-        var o={nome:$("#pNome").value.trim(),cultura:$("#pCult").value,variedade:$("#pVar").value.trim(),area:Number($("#pArea").value),plantio:$("#pData").value};
-        if(id){Object.assign(talhao(id),o);}else{o.id=uid();S.talhoes.push(o);}
-        save();closeSheet();render();toast(id?"Talhão atualizado":"Talhão adicionado");
-      };
-    });
-}
-function sheetTask(){
-  openSheet("Nova tarefa",
-    '<form id="fTask" class="stack">'+
-    '<label for="tTxt">O que precisa ser feito?<input class="field" id="tTxt" required placeholder="Ex.: Regular a plantadeira"></label>'+
-    '<div class="row"><label for="tData">Para quando<input class="field" type="date" id="tData" required value="'+iso(today0())+'"></label>'+
-    '<label for="tTal">Talhão<select class="field" id="tTal">'+plotOptions("",true)+'</select></label></div>'+
-    '<button class="btn" type="submit">Criar tarefa</button></form>',
-    function(){$("#fTask").onsubmit=function(e){e.preventDefault();S.lembretes.push({id:uid(),texto:$("#tTxt").value.trim(),data:$("#tData").value,talhao:$("#tTal").value,feito:false});save();closeSheet();render();toast("Tarefa criada");};});
-}
-function sheetConfirmDelete(id){
-  var t=talhao(id);
-  openSheet("Excluir talhão?",
-    '<div class="stack"><p style="margin:0">O talhão <b>'+esc(t.nome)+'</b> e todos os registros dele serão apagados deste aparelho. Isso não pode ser desfeito.</p>'+
-    '<button class="btn danger" id="yesDel" style="border-color:var(--danger)">Excluir talhão e registros</button><button class="btn ghost" data-close>Cancelar</button></div>',
-    function(){$("#yesDel").onclick=function(){S.talhoes=S.talhoes.filter(function(x){return x.id!==id;});S.registros=S.registros.filter(function(r){return r.talhao!==id;});S.lembretes=S.lembretes.filter(function(l){return l.talhao!==id;});detail=null;save();closeSheet();render();toast("Talhão excluído");};});
-}
-function sheetSettings(){
-  openSheet("Configurações",
-    '<form id="fSet" class="stack"><label for="sNome">Seu nome<input class="field" id="sNome" value="'+esc(S.nome)+'"></label><button class="btn" type="submit">Salvar</button></form>'+
-    '<div class="stack" style="margin-top:18px"><p class="hint">Os dados ficam salvos só neste aparelho e neste navegador.</p><button class="btn ghost" id="sReset">Restaurar dados de exemplo</button><button class="btn danger" id="sClear">Começar do zero</button></div>',
-    function(){
-      $("#fSet").onsubmit=function(e){e.preventDefault();S.nome=$("#sNome").value.trim()||"produtor";save();closeSheet();render();toast("Nome atualizado");};
-      $("#sReset").onclick=function(){S=seed();save();detail=null;closeSheet();render();toast("Exemplo restaurado");};
-      $("#sClear").onclick=function(){var n=S.nome;S={nome:n,talhoes:[],registros:[],lembretes:[],checklist:seed().checklist.map(function(c){c.ok=false;return c;})};save();detail=null;closeSheet();render();toast("Tudo limpo. Boa safra!");};
-    });
-}
-
-/* ---------- calculadoras ---------- */
-function calc(id){
-  var cfg={
-    calda:{t:"Calda de pulverização",f:[["area","Área a aplicar (ha)",10],["vazao","Volume de calda (L/ha)",150],["tanque","Capacidade do tanque (L)",2000],["dose","Dose do produto (L ou kg/ha)",0.5]],
-      run:function(v){var cal=v.area*v.vazao,tq=v.tanque>0?cal/v.tanque:0,ha=v.vazao>0?v.tanque/v.vazao:0;return [["Calda total",num(cal,0)+" L"],["Tanques",num(Math.ceil(tq),0)+" ("+num(tq,2)+")"],["Cada tanque cobre",num(ha,2)+" ha"],["Produto por tanque cheio",num(ha*v.dose,2)+" L/kg"],["Produto total",num(v.area*v.dose,2)+" L/kg"]];},
-      hint:"Confira sempre a dose e o intervalo de segurança na bula do produto."},
-    adubo:{t:"Adubação",f:[["area","Área (ha)",10],["dose","Dose recomendada (kg/ha)",300],["saco","Peso do saco (kg)",50]],
-      run:function(v){var tot=v.area*v.dose;return [["Adubo total",num(tot,0)+" kg"],["Em toneladas",num(tot/1000,2)+" t"],["Sacos",num(v.saco>0?Math.ceil(tot/v.saco):0,0)+" sacos de "+num(v.saco,0)+" kg"]];},
-      hint:"Use a dose indicada na sua análise de solo."},
-    populacao:{t:"População de plantas",f:[["linha","Espaçamento entre linhas (cm)",50],["metro","Plantas por metro",14],["germ","Germinação (%)",90]],
-      run:function(v){var pop=v.linha>0?(10000/(v.linha/100))*v.metro:0,sem=v.germ>0?v.metro/(v.germ/100):0;return [["Plantas por hectare",num(pop,0)],["Plantas por m²",num(pop/10000,1)],["Sementes por metro a regular",num(sem,1)]];},
-      hint:"Considera que todas as sementes viáveis viram plantas."},
-    area:{t:"Conversor de área",f:[["valor","Quantidade",1]],sel:true,
-      run:function(v,u){var ha={ha:1,alqp:2.42,alqm:4.84,alqb:4.84,m2:.0001,tarefa:.3025}[u]*v.valor;return [["Hectares",num(ha,3)+" ha"],["Metros quadrados",num(ha*10000,0)+" m²"],["Alqueire paulista (2,42 ha)",num(ha/2.42,3)],["Alqueire mineiro/goiano (4,84 ha)",num(ha/4.84,3)]];},
-      hint:"O tamanho do alqueire muda de região para região."}
-  }[id];
-  var fields=cfg.f.map(function(f){return '<label for="c_'+f[0]+'">'+f[1]+'<input class="field" type="number" inputmode="decimal" step="any" min="0" id="c_'+f[0]+'" value="'+f[2]+'"></label>';}).join("");
-  if(cfg.sel)fields+='<label for="c_un">Unidade<select class="field" id="c_un"><option value="alqm">Alqueire mineiro/goiano</option><option value="alqp">Alqueire paulista</option><option value="ha">Hectare</option><option value="m2">Metro quadrado</option><option value="tarefa">Tarefa (nordeste, 3.025 m²)</option></select></label>';
-  openSheet(cfg.t,'<div class="stack">'+fields+'<div class="result" id="cRes" aria-live="polite"></div><p class="hint">'+cfg.hint+'</p></div>',function(root){
-    function go(){var v={};cfg.f.forEach(function(f){v[f[0]]=Number($("#c_"+f[0]).value)||0;});var rows=cfg.run(v,cfg.sel?$("#c_un").value:null);$("#cRes").innerHTML=rows.map(function(r){return '<div><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>';}).join("");}
-    root.querySelectorAll("input,select").forEach(function(i){i.oninput=go;i.onchange=go;});go();
-  });
-}
-
-/* ---------- eventos ---------- */
-document.addEventListener("click",function(e){
-  var b=e.target.closest("button");if(!b)return;
-  var d=b.dataset;
-  if(b.classList.contains("tab")){tab=d.tab;detail=null;render();return;}
-  if(b.id==="fab"){sheetRecord(null,detail||"");return;}
-  if(b.id==="btnSettings"){sheetSettings();return;}
-  if("close" in d){closeSheet();return;}
-  if(d.go){tab=d.go;detail=null;render();return;}
-  if(d.open){detail=d.open;render();window.scrollTo(0,0);return;}
-  if("back" in d){detail=null;tab="talhoes";render();return;}
-  if(d.add){sheetRecord(d.add,"");return;}
-  if(d.addFor){sheetRecord(null,d.addFor);return;}
-  if("newPlot" in d){sheetPlot(null);return;}
-  if(d.editPlot){sheetPlot(d.editPlot);return;}
-  if(d.delPlot){sheetConfirmDelete(d.delPlot);return;}
-  if("newTask" in d){sheetTask();return;}
-  if(d.task){S.lembretes.forEach(function(l){if(l.id===d.task)l.feito=!l.feito;});save();render();return;}
-  if(d.ck!=null){var c=S.checklist[+d.ck];c.ok=!c.ok;save();render();return;}
-  if(d.filter){filtro=d.filter;render();return;}
-  if(d.tool){calc(d.tool);return;}
-});
-$("#sheetWrap").addEventListener("click",function(e){if(e.target.id==="sheetWrap")closeSheet();});
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSheet();});
-render();
-})();
-</script>
+<footer>
+  <div class="wrap">
+    <span><b style="color:var(--leaf);font-family:var(--display)">Safra</b> · caderno de campo do produtor</span>
+    <span>© 2026 Safra</span>
+  </div>
+</footer>
 </body>
 </html>
