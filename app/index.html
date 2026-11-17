@@ -206,6 +206,13 @@ header.top .actions{display:flex;align-items:center;gap:10px}
 .entry img[data-sb]:not([src]){aspect-ratio:4/3;background:var(--line)}
 .center-msg{min-height:60vh;display:grid;place-items:center;text-align:center;gap:12px}
 
+.social{display:grid;gap:10px}
+.social button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:15px;cursor:pointer}
+.social button:hover{border-color:var(--muted)}
+.social button svg{width:20px;height:20px;flex:none}
+.social button[disabled]{opacity:.55;cursor:not-allowed}
+.auth-note{margin:0;font-size:13px;color:var(--muted);background:var(--sun-soft);border-radius:12px;padding:10px 12px}
+
 /* ---------- Computador: menu lateral + painel em colunas ---------- */
 .side,.desk-only{display:none}
 .kbd{font-family:var(--body);font-size:12px;font-weight:700;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--muted);background:var(--surface)}
@@ -274,6 +281,9 @@ header.top .actions{display:flex;align-items:center;gap:10px}
         <button type="button" data-auth="entrar" aria-pressed="true">Entrar</button>
         <button type="button" data-auth="criar" aria-pressed="false">Criar conta</button>
       </div>
+      <p class="auth-note" id="authNote" hidden></p>
+      <div class="social" id="social"></div>
+      <div class="or" id="orEmail">ou com e-mail</div>
       <form id="fAuth" class="stack" novalidate>
         <label for="aNome" id="lNome" hidden>Seu nome<input class="field" id="aNome" autocomplete="given-name" placeholder="Como quer ser chamado"></label>
         <label for="aEmail">E-mail<input class="field" type="email" id="aEmail" autocomplete="email" inputmode="email" placeholder="voce@email.com"></label>
@@ -441,7 +451,7 @@ function setTheme(t){try{localStorage.setItem(THEME_KEY,t);}catch(e){}var r=docu
 var CFG=window.SAFRA_CONFIG||{};
 var configured=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey);
 var sb=null;
-if(configured&&window.supabase&&window.supabase.createClient){try{sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);}catch(e){sb=null;}}
+if(configured&&window.supabase&&window.supabase.createClient){try{sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{flowType:"pkce",detectSessionInUrl:true,persistSession:true}});}catch(e){sb=null;}}
 var saveSeq=0,MODE="local",USER=null,pulled=false,dirty=false,pushTimer=null,cloudStamp=null,booted=false,syncNow="local";
 function readLocal(k){try{var j=localStorage.getItem(k);return j?JSON.parse(j):null;}catch(e){return null;}}
 function writeLocal(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -513,6 +523,26 @@ function signOut(){
 }
 
 /* ---------- tela de login ---------- */
+var PROVIDERS={
+  google:{nome:"Google",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg>'},
+  azure:{nome:"Microsoft (Outlook/Hotmail)",scopes:"email openid profile",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>'},
+  apple:{nome:"Apple",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8a4.6 4.6 0 0 0-3.6-2c-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8a4.9 4.9 0 0 0-4.1 2.5c-1.8 3-.5 7.6 1.3 10.1.8 1.2 1.8 2.6 3.1 2.5 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4a10 10 0 0 0 1.4-2.8 4.3 4.3 0 0 1-2.5-4.2zM14 5.2a4.4 4.4 0 0 0 1-3.2 4.5 4.5 0 0 0-2.9 1.5 4.2 4.2 0 0 0-1.1 3.1A3.7 3.7 0 0 0 14 5.2z"/></svg>'},
+  github:{nome:"GitHub",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z"/></svg>'}
+};
+var ENABLED=(Array.isArray(CFG.provedores)?CFG.provedores:["google","azure","apple"]).filter(function(k){return PROVIDERS[k];});
+function renderSocial(){
+  var box=$("#social");
+  box.innerHTML=ENABLED.map(function(k){return '<button type="button" data-oauth="'+k+'"'+(sb?'':' disabled')+'>'+PROVIDERS[k].svg+'Continuar com '+PROVIDERS[k].nome+'</button>';}).join("");
+  box.hidden=!ENABLED.length;$("#orEmail").hidden=!ENABLED.length;
+  box.querySelectorAll("[data-oauth]").forEach(function(b){b.onclick=function(){oauth(b.dataset.oauth,b);};});
+}
+function oauth(k,btn){
+  if(!sb){authMsg("O login ainda não está ativo neste site.");return;}
+  btn.disabled=true;authMsg("");
+  var opts={redirectTo:location.origin+location.pathname};
+  if(PROVIDERS[k].scopes)opts.scopes=PROVIDERS[k].scopes;
+  sb.auth.signInWithOAuth({provider:k,options:opts}).then(function(r){if(r.error){btn.disabled=false;authMsg(ptErr(r.error));}},function(e){btn.disabled=false;authMsg(ptErr(e));});
+}
 var authMode="entrar";
 var AUTH_TXT={
   entrar:{t:"Entre na sua conta",s:"Seus talhões e o diário de campo, iguais no celular e no computador.",b:"Entrar"},
@@ -520,12 +550,16 @@ var AUTH_TXT={
   esqueci:{t:"Recuperar senha",s:"Informe seu e-mail e enviaremos um link para criar uma senha nova.",b:"Enviar link"}
 };
 function showAuth(m){
-  document.body.classList.add("auth-on");$("#auth").hidden=false;closeSheet();setAuthMode(m||"entrar");
+  document.body.classList.add("auth-on");$("#auth").hidden=false;closeSheet();renderSocial();setAuthMode(m||"entrar");
+  var note=$("#authNote");
+  if(!configured){note.hidden=false;note.textContent="O login ainda está sendo configurado neste site. Por enquanto, use \"Usar sem conta\": seus dados ficam salvos neste aparelho.";$("#aBtn").disabled=true;}
+  else if(!sb){note.hidden=false;note.textContent="Sem conexão com o servidor de login. Confira a internet e recarregue a página.";$("#aBtn").disabled=true;}
+  else{note.hidden=true;$("#aBtn").disabled=false;}
 }
 function setAuthMode(m){
   authMode=m;var t=AUTH_TXT[m];
   $("#authTitle").textContent=t.t;$("#authSub").textContent=t.s;$("#aBtn").textContent=t.b;
-  $("#authSeg").hidden=m==="esqueci";
+  $("#authSeg").hidden=m==="esqueci";$("#social").hidden=m==="esqueci"||!ENABLED.length;$("#orEmail").hidden=m==="esqueci"||!ENABLED.length;
   document.querySelectorAll("[data-auth]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.auth===m);});
   $("#lNome").hidden=m!=="criar";$("#lSenha").hidden=m==="esqueci";
   $("#aSenha").setAttribute("autocomplete",m==="criar"?"new-password":"current-password");
@@ -540,6 +574,9 @@ function ptErr(e){
   if(/already registered|already exists/i.test(m))return "Já existe uma conta com esse e-mail. Use a aba Entrar.";
   if(/Password should be at least/i.test(m))return "A senha precisa ter pelo menos 6 caracteres.";
   if(/rate limit|too many/i.test(m))return "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
+  if(/link is invalid|has expired|otp_expired/i.test(m))return "Esse link expirou ou já foi usado. Entre de novo ou peça um novo link.";
+  if(/access_denied|cancel/i.test(m))return "O login foi cancelado. Tente de novo.";
+  if(/provider is not enabled|Unsupported provider/i.test(m))return "Esse tipo de login ainda não foi ativado. Use outro botão ou entre com e-mail e senha.";
   if(/fetch|network/i.test(m))return "Sem conexão com o servidor. Confira a internet.";
   return m||"Algo deu errado. Tente de novo.";
 }
@@ -913,25 +950,42 @@ document.addEventListener("visibilitychange",function(){
   if(document.visibilityState!=="visible"||MODE!=="nuvem"||!pulled||dirty||!sb)return;
   pull().then(function(row){if(row&&row.atualizado_em!==cloudStamp&&!dirty){S=row.dados;cloudStamp=row.atualizado_em;writeLocal(cacheKey(),S);if(!$("#sheetWrap").classList.contains("open"))render();setSync("ok");}}).catch(function(){});
 });
+function cleanUrl(){
+  if(location.search&&/[?&](code|error|error_description)=/.test(location.search)){
+    try{history.replaceState(null,"",location.pathname+(/^#(entrar|criar)$/.test(location.hash)?"":location.hash));}catch(e){}
+  }
+}
+function urlError(){
+  var q=new URLSearchParams(location.search),h=new URLSearchParams((location.hash||"").replace(/^#/,""));
+  var d=q.get("error_description")||h.get("error_description");
+  return d?decodeURIComponent(d.replace(/\+/g," ")):"";
+}
 function boot(){
   bindAuth();
-  if(!configured){startLocal();return;}
+  var want=(location.hash||"").slice(1);
+  var askAuth=want==="entrar"||want==="criar";
+  if(askAuth)try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
+  if(!configured){if(askAuth)showAuth(want);else startLocal();return;}
   var modo=readLocal("safra-modo");
-  if(!sb){ // biblioteca não carregou (sem internet): usa o que está guardado no aparelho
+  if(!sb){
     var last=readLocal("safra-ultimo-usuario");
-    if(modo==="nuvem"&&last){startCloud(last);return;}
+    if(modo==="nuvem"&&last&&!askAuth){startCloud(last);return;}
+    if(askAuth){showAuth(want);return;}
     startLocal();return;
   }
+  var err=urlError();
   sb.auth.onAuthStateChange(function(ev,session){
     if(ev==="PASSWORD_RECOVERY"&&session){startCloud(session.user,sheetNewPassword);}
   });
   sb.auth.getSession().then(function(r){
+    cleanUrl();
     var sess=r.data&&r.data.session;
     if(sess)startCloud(sess.user);
-    else if((location.hash||"")==="#criar")showAuth("criar");
+    else if(err){showAuth("entrar");authMsg(ptErr({message:err}));}
+    else if(askAuth)showAuth(want);
     else if(modo==="local")startLocal();
     else showAuth("entrar");
-  },function(){modo==="local"?startLocal():showAuth("entrar");});
+  },function(){cleanUrl();(modo==="local"&&!askAuth)?startLocal():showAuth(askAuth?want:"entrar");});
 }
 boot();
 })();

@@ -14,5 +14,10 @@
 // =============================================================
 window.SAFRA_CONFIG = {
   supabaseUrl: "",      // ex.: "https://abcdefghijkl.supabase.co"
-  supabaseAnonKey: ""   // ex.: "eyJhbGciOi..." ou "sb_publishable_..."
+  supabaseAnonKey: "",  // ex.: "eyJhbGciOi..." ou "sb_publishable_..."
+
+  // Botões de login social que aparecem na tela de entrada.
+  // Deixe só os que você ativou no Supabase (Authentication → Providers).
+  // Opções: "google", "azure" (Microsoft/Outlook/Hotmail), "apple", "github"
+  provedores: ["google", "azure", "apple"]
 };

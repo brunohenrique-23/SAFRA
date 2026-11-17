@@ -33,6 +33,27 @@ Links depois de publicar no Render:
 
 Para testar sem precisar confirmar e-mail: **Authentication → Sign In / Providers → Email** → desligue **Confirm email**. Em produção, deixe ligado.
 
+## 1b. Login com Google, Microsoft, Apple e GitHub
+
+Entrar com **e-mail e senha** já aceita qualquer e-mail (Gmail, Outlook, Hotmail, iCloud, Yahoo…).
+Os botões "Continuar com…" precisam ser ativados um por um no Supabase, em **Authentication → Sign In / Providers**.
+Em todos eles, o endereço de retorno (Callback URL) é:
+
+```
+https://SEU-PROJETO.supabase.co/auth/v1/callback
+```
+
+- **GitHub** (mais fácil): github.com → Settings → Developer settings → OAuth Apps → New OAuth App. Homepage: seu link do Render. Callback: o endereço acima. Copie o Client ID e gere um Client Secret, depois cole no provedor GitHub do Supabase.
+- **Google**: console.cloud.google.com → crie um projeto → APIs e serviços → Tela de consentimento OAuth (Externo) → Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web. Em "URIs de redirecionamento autorizados", cole o Callback. Cole o Client ID e o Secret no provedor Google do Supabase.
+- **Microsoft (Outlook/Hotmail)**: portal.azure.com → Microsoft Entra ID → Registros de aplicativo → Novo registro. Tipo de conta: "contas em qualquer diretório organizacional e contas Microsoft pessoais". URI de redirecionamento (Web): o Callback. Em "Certificados e segredos", crie um segredo. Cole o ID do aplicativo (cliente) e o valor do segredo no provedor **Azure** do Supabase.
+- **Apple**: exige conta no Apple Developer Program (paga, US$ 99/ano). Sem ela, tire "apple" da lista em `config.js`.
+
+Depois de ativar, deixe em `app/config.js` só os provedores que funcionam, por exemplo:
+
+```js
+provedores: ["google", "azure", "github"]
+```
+
 ## 2. Testar no computador
 
 Abra a pasta no VS Code e rode o **Live Server** no `index.html` da raiz. O app fica em `http://127.0.0.1:5500/app/`.
