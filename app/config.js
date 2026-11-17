@@ -1,23 +1,20 @@
 // =============================================================
 // Safra · configuração do Firebase
-//
-// Cole aqui o objeto "firebaseConfig" do seu projeto:
-// Firebase → ⚙ Configurações do projeto → Geral → Seus apps → app da Web (</>)
+// Projeto: safra-3e75f
 //
 // Esses valores podem ficar no site sem problema: foram feitos para o
 // navegador. Quem protege os dados são as regras do Firestore
 // (arquivo firebase/firestore.rules).
-//
-// Enquanto "apiKey" estiver vazio, o app funciona só no aparelho, sem login.
 // =============================================================
 window.SAFRA_CONFIG = {
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyCurtuvvu0by_g8TRNHMr7cKxM9z1Slv8g",
+    authDomain: "safra-3e75f.firebaseapp.com",
+    projectId: "safra-3e75f",
+    storageBucket: "safra-3e75f.firebasestorage.app",
+    messagingSenderId: "942570186880",
+    appId: "1:942570186880:web:18542b256fd796c0359e65",
+    measurementId: "G-ZZGY02C250"
   },
 
   // Botões "Continuar com…" da tela de entrada.
