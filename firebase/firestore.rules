@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Safra · regras de segurança do Firestore
+// Cada pessoa só lê e grava os próprios dados (talhões, diário e fotos).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /usuarios/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /fotos/{fotoId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}

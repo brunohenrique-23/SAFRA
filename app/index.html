@@ -9,7 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem("safra-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
 <style>
 /* Plano: app de bolso claro e amigável; folha verde como ação, sol para destaque, terra como apoio.
@@ -203,7 +205,7 @@ header.top .actions{display:flex;align-items:center;gap:10px}
 .acct{display:grid;gap:4px;background:var(--surface);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
 .acct b{overflow-wrap:anywhere}
 .side .acct-mini{padding:0 8px;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.entry img[data-sb]:not([src]){aspect-ratio:4/3;background:var(--line)}
+.entry img[data-fs]:not([src]){aspect-ratio:4/3;background:var(--line)}
 .center-msg{min-height:60vh;display:grid;place-items:center;text-align:center;gap:12px}
 
 .social{display:grid;gap:10px}
@@ -447,15 +449,20 @@ var THEME_KEY="safra-tema";
 function getTheme(){try{return localStorage.getItem(THEME_KEY)||"auto";}catch(e){return "auto";}}
 function setTheme(t){try{localStorage.setItem(THEME_KEY,t);}catch(e){}var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);}
 
-/* ---------- armazenamento: aparelho + nuvem (Supabase) ---------- */
+/* ---------- armazenamento: aparelho + nuvem (Firebase) ---------- */
 var CFG=window.SAFRA_CONFIG||{};
-var configured=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey);
-var sb=null;
-if(configured&&window.supabase&&window.supabase.createClient){try{sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{flowType:"pkce",detectSessionInUrl:true,persistSession:true}});}catch(e){sb=null;}}
+var FBC=CFG.firebase||{};
+var configured=!!(FBC.apiKey&&FBC.projectId);
+var auth=null,db=null;
+if(configured&&window.firebase&&firebase.initializeApp){
+  try{firebase.initializeApp(FBC);auth=firebase.auth();db=firebase.firestore();auth.useDeviceLanguage();}catch(e){auth=null;db=null;}
+}
+var api=!!(auth&&db);
 var saveSeq=0,MODE="local",USER=null,pulled=false,dirty=false,pushTimer=null,cloudStamp=null,booted=false,syncNow="local";
 function readLocal(k){try{var j=localStorage.getItem(k);return j?JSON.parse(j):null;}catch(e){return null;}}
 function writeLocal(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function cacheKey(){return MODE==="nuvem"&&USER?"safra-cache-"+USER.id:KEY;}
+function userDoc(){return db.collection("usuarios").doc(USER.id);}
 var SYNC_TXT={local:"Só neste aparelho",ok:"Sincronizado",salvando:"Salvando…",carregando:"Carregando…",offline:"Sem internet · salvo no aparelho",erro:"Não sincronizou · tentando de novo"};
 function setSync(st){syncNow=st;document.querySelectorAll(".sync").forEach(function(el){el.dataset.s=st;el.lastChild.textContent=SYNC_TXT[st]||"";});}
 function save(){
@@ -465,16 +472,18 @@ function save(){
   clearTimeout(pushTimer);pushTimer=setTimeout(push,700);
 }
 function push(){
-  if(!sb||!USER||!pulled){if(MODE==="nuvem")setSync("offline");return;}
+  if(!api||!USER||!pulled){if(MODE==="nuvem")setSync("offline");return;}
   if(navigator.onLine===false){setSync("offline");return;}
   var stamp=new Date().toISOString(),mySeq=saveSeq;
-  sb.from("safra_dados").upsert({user_id:USER.id,dados:S,atualizado_em:stamp}).then(function(res){
-    if(res.error){setSync("erro");clearTimeout(pushTimer);pushTimer=setTimeout(push,8000);return;}
+  userDoc().set({dados:JSON.parse(JSON.stringify(S)),atualizado_em:stamp,email:USER.email||""}).then(function(){
     cloudStamp=stamp;if(mySeq!==saveSeq)return;dirty=false;writeLocal(cacheKey()+"-pendente",false);setSync("ok");
-  },function(){setSync("offline");});
+  },function(e){
+    if(e&&e.code==="permission-denied"){setSync("erro");toast("O Firebase recusou salvar: confira as regras do Firestore");return;}
+    setSync(navigator.onLine===false?"offline":"erro");clearTimeout(pushTimer);pushTimer=setTimeout(push,8000);
+  });
 }
 function pull(){
-  return sb.from("safra_dados").select("dados,atualizado_em").eq("user_id",USER.id).maybeSingle().then(function(res){if(res.error)throw res.error;return res.data;});
+  return userDoc().get().then(function(d){return d.exists?d.data():null;});
 }
 function hasContent(d){return d&&((d.talhoes&&d.talhoes.length)||(d.registros&&d.registros.length));}
 
@@ -485,15 +494,15 @@ function startLocal(){
   setSync("local");$("#acctMini").textContent="";
   showApp();route();
 }
-function startCloud(user,after){
-  MODE="nuvem";USER={id:user.id,email:user.email,nome:(user.user_metadata&&user.user_metadata.nome)||""};
+function startCloud(user,nomeNovo){
+  MODE="nuvem";USER={id:user.uid||user.id,email:user.email||"",nome:nomeNovo||user.displayName||user.nome||""};
   writeLocal("safra-modo","nuvem");writeLocal("safra-ultimo-usuario",USER);
   $("#acctMini").textContent=USER.email||"";
   showApp();
   var cache=readLocal(cacheKey()),pend=readLocal(cacheKey()+"-pendente");
   if(cache){S=cache;route();}else{S=null;$("#view").innerHTML='<div class="center-msg"><div><div class="big">Carregando sua lavoura…</div></div></div>';}
   setSync("carregando");
-  if(!sb){pulled=false;if(!cache){offlineScreen();}else setSync("offline");return;}
+  if(!api){pulled=false;if(!cache){offlineScreen();}else setSync("offline");return;}
   pull().then(function(row){
     pulled=true;
     if(row&&!(pend&&cache)){S=row.dados;cloudStamp=row.atualizado_em;dirty=false;writeLocal(cacheKey(),S);setSync("ok");}
@@ -503,13 +512,14 @@ function startCloud(user,after){
       if(cache)S=cache;
       else if(hasContent(dev)){S=dev;setTimeout(function(){toast("Dados deste aparelho levados para a sua conta");},300);}
       else S=seed();
-      if(USER.nome&&!cache)S.nome=USER.nome;
+      if(USER.nome&&!cache)S.nome=USER.nome.split(" ")[0];
       save();
     }
-    route();if(after)after();
-  }).catch(function(){
+    route();
+  }).catch(function(e){
     pulled=false;
-    if(cache){setSync("offline");if(after)after();}else offlineScreen();
+    if(e&&e.code==="permission-denied"){toast("O Firebase recusou o acesso: confira as regras do Firestore");}
+    if(cache){setSync("offline");}else offlineScreen();
   });
 }
 function offlineScreen(){
@@ -518,30 +528,41 @@ function offlineScreen(){
 }
 function signOut(){
   var k=cacheKey();
-  function done(){writeLocal(k,null);writeLocal(k+"-pendente",null);writeLocal("safra-modo",null);writeLocal("safra-ultimo-usuario",null);MODE="local";USER=null;S=null;pulled=false;dirty=false;showAuth("entrar");}
-  if(sb)sb.auth.signOut().then(done,done);else done();
+  function done(){writeLocal(k,null);writeLocal(k+"-pendente",null);writeLocal("safra-modo",null);writeLocal("safra-ultimo-usuario",null);MODE="local";USER=null;S=null;pulled=false;dirty=false;try{history.replaceState(null,"",location.pathname);}catch(e){}showAuth("entrar");}
+  if(auth)auth.signOut().then(done,done);else done();
 }
 
 /* ---------- tela de login ---------- */
 var PROVIDERS={
   google:{nome:"Google",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg>'},
-  azure:{nome:"Microsoft (Outlook/Hotmail)",scopes:"email openid profile",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>'},
+  microsoft:{nome:"Microsoft (Outlook/Hotmail)",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>'},
   apple:{nome:"Apple",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8a4.6 4.6 0 0 0-3.6-2c-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8a4.9 4.9 0 0 0-4.1 2.5c-1.8 3-.5 7.6 1.3 10.1.8 1.2 1.8 2.6 3.1 2.5 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4a10 10 0 0 0 1.4-2.8 4.3 4.3 0 0 1-2.5-4.2zM14 5.2a4.4 4.4 0 0 0 1-3.2 4.5 4.5 0 0 0-2.9 1.5 4.2 4.2 0 0 0-1.1 3.1A3.7 3.7 0 0 0 14 5.2z"/></svg>'},
   github:{nome:"GitHub",svg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z"/></svg>'}
 };
-var ENABLED=(Array.isArray(CFG.provedores)?CFG.provedores:["google","azure","apple"]).filter(function(k){return PROVIDERS[k];});
+var ENABLED=(Array.isArray(CFG.provedores)?CFG.provedores:["google"]).map(function(k){return k==="azure"?"microsoft":k;}).filter(function(k,i,a){return PROVIDERS[k]&&a.indexOf(k)===i;});
+function makeProvider(k){
+  var p;
+  if(k==="google"){p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});}
+  else if(k==="microsoft"){p=new firebase.auth.OAuthProvider("microsoft.com");p.setCustomParameters({prompt:"select_account"});}
+  else if(k==="apple"){p=new firebase.auth.OAuthProvider("apple.com");p.addScope("email");p.addScope("name");}
+  else if(k==="github"){p=new firebase.auth.GithubAuthProvider();p.addScope("user:email");}
+  return p;
+}
 function renderSocial(){
   var box=$("#social");
-  box.innerHTML=ENABLED.map(function(k){return '<button type="button" data-oauth="'+k+'"'+(sb?'':' disabled')+'>'+PROVIDERS[k].svg+'Continuar com '+PROVIDERS[k].nome+'</button>';}).join("");
+  box.innerHTML=ENABLED.map(function(k){return '<button type="button" data-oauth="'+k+'"'+(api?'':' disabled')+'>'+PROVIDERS[k].svg+'Continuar com '+PROVIDERS[k].nome+'</button>';}).join("");
   box.hidden=!ENABLED.length;$("#orEmail").hidden=!ENABLED.length;
   box.querySelectorAll("[data-oauth]").forEach(function(b){b.onclick=function(){oauth(b.dataset.oauth,b);};});
 }
 function oauth(k,btn){
-  if(!sb){authMsg("O login ainda não está ativo neste site.");return;}
+  if(!api){authMsg("O login ainda não está ativo neste site.");return;}
   btn.disabled=true;authMsg("");
-  var opts={redirectTo:location.origin+location.pathname};
-  if(PROVIDERS[k].scopes)opts.scopes=PROVIDERS[k].scopes;
-  sb.auth.signInWithOAuth({provider:k,options:opts}).then(function(r){if(r.error){btn.disabled=false;authMsg(ptErr(r.error));}},function(e){btn.disabled=false;authMsg(ptErr(e));});
+  var prov=makeProvider(k);
+  auth.signInWithPopup(prov).then(function(r){startCloud(r.user);}).catch(function(e){
+    btn.disabled=false;
+    if(e&&(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment")){auth.signInWithRedirect(prov).catch(function(er){authMsg(ptErr(er));});return;}
+    authMsg(ptErr(e));
+  });
 }
 var authMode="entrar";
 var AUTH_TXT={
@@ -553,7 +574,7 @@ function showAuth(m){
   document.body.classList.add("auth-on");$("#auth").hidden=false;closeSheet();renderSocial();setAuthMode(m||"entrar");
   var note=$("#authNote");
   if(!configured){note.hidden=false;note.textContent="O login ainda está sendo configurado neste site. Por enquanto, use \"Usar sem conta\": seus dados ficam salvos neste aparelho.";$("#aBtn").disabled=true;}
-  else if(!sb){note.hidden=false;note.textContent="Sem conexão com o servidor de login. Confira a internet e recarregue a página.";$("#aBtn").disabled=true;}
+  else if(!api){note.hidden=false;note.textContent="Sem conexão com o servidor de login. Confira a internet e recarregue a página.";$("#aBtn").disabled=true;}
   else{note.hidden=true;$("#aBtn").disabled=false;}
 }
 function setAuthMode(m){
@@ -568,17 +589,32 @@ function setAuthMode(m){
 }
 function authMsg(t,ok){var el=$("#authMsg");el.textContent=t;el.className="auth-msg"+(t?(ok?" ok":" err"):"");}
 function ptErr(e){
-  var m=(e&&e.message)||"";
-  if(/Invalid login credentials/i.test(m))return "E-mail ou senha incorretos.";
-  if(/Email not confirmed/i.test(m))return "Confirme seu e-mail pelo link que enviamos antes de entrar.";
-  if(/already registered|already exists/i.test(m))return "Já existe uma conta com esse e-mail. Use a aba Entrar.";
-  if(/Password should be at least/i.test(m))return "A senha precisa ter pelo menos 6 caracteres.";
-  if(/rate limit|too many/i.test(m))return "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
-  if(/link is invalid|has expired|otp_expired/i.test(m))return "Esse link expirou ou já foi usado. Entre de novo ou peça um novo link.";
-  if(/access_denied|cancel/i.test(m))return "O login foi cancelado. Tente de novo.";
-  if(/provider is not enabled|Unsupported provider/i.test(m))return "Esse tipo de login ainda não foi ativado. Use outro botão ou entre com e-mail e senha.";
-  if(/fetch|network/i.test(m))return "Sem conexão com o servidor. Confira a internet.";
-  return m||"Algo deu errado. Tente de novo.";
+  var c=(e&&e.code)||"",m=(e&&e.message)||"";
+  var M={
+    "auth/invalid-credential":"E-mail ou senha incorretos.",
+    "auth/invalid-login-credentials":"E-mail ou senha incorretos.",
+    "auth/wrong-password":"E-mail ou senha incorretos.",
+    "auth/user-not-found":"Não existe conta com esse e-mail. Use a aba Criar conta.",
+    "auth/email-already-in-use":"Já existe uma conta com esse e-mail. Use a aba Entrar.",
+    "auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.",
+    "auth/invalid-email":"Digite um e-mail válido.",
+    "auth/too-many-requests":"Muitas tentativas seguidas. Espere um pouco e tente de novo.",
+    "auth/network-request-failed":"Sem conexão com o servidor. Confira a internet.",
+    "auth/popup-closed-by-user":"A janela de login foi fechada antes de terminar. Tente de novo.",
+    "auth/cancelled-popup-request":"A janela de login foi fechada antes de terminar. Tente de novo.",
+    "auth/user-cancelled":"O login foi cancelado. Tente de novo.",
+    "auth/operation-not-allowed":"Esse tipo de login ainda não foi ativado no Firebase. Use outro botão ou e-mail e senha.",
+    "auth/unauthorized-domain":"Este endereço ainda não foi autorizado no Firebase (Authentication → Configurações → Domínios autorizados).",
+    "auth/account-exists-with-different-credential":"Já existe uma conta com esse e-mail usando outro tipo de login. Entre pelo mesmo método da primeira vez.",
+    "auth/invalid-api-key":"A configuração do Firebase no config.js está incorreta.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"A configuração do Firebase no config.js está incorreta.",
+    "auth/configuration-not-found":"O login do Firebase ainda não foi ativado (Authentication → Começar).",
+    "auth/missing-password":"Digite a senha.",
+    "permission-denied":"O Firebase recusou o acesso. Confira as regras do Firestore."
+  };
+  if(M[c])return M[c];
+  if(/network|fetch/i.test(m))return M["auth/network-request-failed"];
+  return "Algo deu errado"+(c?" ("+c+")":"")+". Tente de novo.";
 }
 function bindAuth(){
   document.querySelectorAll("[data-auth]").forEach(function(b){b.onclick=function(){setAuthMode(b.dataset.auth);};});
@@ -589,41 +625,46 @@ function bindAuth(){
     var email=$("#aEmail").value.trim(),senha=$("#aSenha").value,nome=$("#aNome").value.trim(),btn=$("#aBtn");
     if(!/^\S+@\S+\.\S+$/.test(email)){authMsg("Digite um e-mail válido.");return;}
     if(authMode!=="esqueci"&&senha.length<6){authMsg("A senha precisa ter pelo menos 6 caracteres.");return;}
-    if(!sb){authMsg("Sem conexão com o servidor. Confira a internet e recarregue a página.");return;}
-    var back=location.origin+location.pathname;
+    if(!api){authMsg("Sem conexão com o servidor. Confira a internet e recarregue a página.");return;}
     btn.disabled=true;authMsg("");
     var p;
-    if(authMode==="entrar")p=sb.auth.signInWithPassword({email:email,password:senha}).then(function(r){if(r.error)throw r.error;startCloud(r.data.user);});
-    else if(authMode==="criar")p=sb.auth.signUp({email:email,password:senha,options:{data:{nome:nome},emailRedirectTo:back}}).then(function(r){
-      if(r.error)throw r.error;
-      if(r.data.session)startCloud(r.data.user);
-      else{authMsg("Conta criada! Enviamos um link de confirmação para "+email+". Abra o link e depois entre aqui.",true);setAuthMode("entrar");authMsg("Conta criada! Enviamos um link de confirmação para "+email+". Abra o link e depois entre aqui.",true);}
+    if(authMode==="entrar")p=auth.signInWithEmailAndPassword(email,senha).then(function(r){startCloud(r.user);});
+    else if(authMode==="criar")p=auth.createUserWithEmailAndPassword(email,senha).then(function(r){
+      var u=r.user;
+      var jobs=[];
+      if(nome)jobs.push(u.updateProfile({displayName:nome}).catch(function(){}));
+      jobs.push(u.sendEmailVerification().catch(function(){}));
+      return Promise.all(jobs).then(function(){startCloud(u,nome);setTimeout(function(){toast("Conta criada! Enviamos um e-mail de confirmação.");},400);});
     });
-    else p=sb.auth.resetPasswordForEmail(email,{redirectTo:back}).then(function(r){if(r.error)throw r.error;authMsg("Se esse e-mail tiver conta, enviamos um link para criar uma senha nova.",true);});
+    else p=auth.sendPasswordResetEmail(email).then(function(){authMsg("Se esse e-mail tiver conta, enviamos um link para criar uma senha nova. Confira também o spam.",true);}).catch(function(e){if(e&&e.code==="auth/user-not-found"){authMsg("Se esse e-mail tiver conta, enviamos um link para criar uma senha nova. Confira também o spam.",true);return;}throw e;});
     p.catch(function(err){authMsg(ptErr(err));}).then(function(){btn.disabled=false;});
   };
 }
-function sheetNewPassword(){
-  openSheet("Crie uma senha nova",
-    '<form id="fPass" class="stack"><label for="np">Nova senha<input class="field" type="password" id="np" autocomplete="new-password" minlength="6" required></label><p class="auth-msg" id="npMsg"></p><button class="btn" type="submit">Salvar senha</button></form>',
-    function(){$("#fPass").onsubmit=function(e){e.preventDefault();var v=$("#np").value;if(v.length<6){$("#npMsg").textContent="Mínimo de 6 caracteres.";$("#npMsg").className="auth-msg err";return;}
-      sb.auth.updateUser({password:v}).then(function(r){if(r.error){$("#npMsg").textContent=ptErr(r.error);$("#npMsg").className="auth-msg err";return;}closeSheet();toast("Senha alterada");});};});
-}
-
-/* ---------- fotos na nuvem ---------- */
+/* ---------- fotos na nuvem (dentro do Firestore) ---------- */
 var photoUrl={};
+function fotoDoc(id){return userDoc().collection("fotos").doc(id);}
 function resolvePhotos(){
-  if(!sb)return;
-  document.querySelectorAll("img[data-sb]").forEach(function(img){
-    var path=img.dataset.sb;
-    if(photoUrl[path]){img.src=photoUrl[path];return;}
-    sb.storage.from("fotos").createSignedUrl(path,3600).then(function(r){if(r.data&&r.data.signedUrl){photoUrl[path]=r.data.signedUrl;img.src=r.data.signedUrl;}});
+  if(!api||!USER)return;
+  document.querySelectorAll("img[data-fs]").forEach(function(img){
+    var id=img.dataset.fs;
+    if(photoUrl[id]){img.src=photoUrl[id];return;}
+    fotoDoc(id).get().then(function(d){if(d.exists&&d.data().img){photoUrl[id]=d.data().img;img.src=photoUrl[id];}}).catch(function(){});
   });
 }
 function removePhotos(list){
-  if(!sb||!USER)return;
-  var paths=list.filter(function(r){return r.foto&&r.foto.indexOf("sb:")===0;}).map(function(r){return r.foto.slice(3);});
-  if(paths.length)sb.storage.from("fotos").remove(paths).then(function(){},function(){});
+  if(!api||!USER)return;
+  list.forEach(function(r){if(r.foto&&r.foto.indexOf("fs:")===0)fotoDoc(r.foto.slice(3)).delete().catch(function(){});});
+}
+function compact(cv){
+  var q=.7,max=900,url;
+  for(var i=0;i<6;i++){
+    var s=Math.min(1,max/Math.max(cv.width,cv.height)),c=document.createElement("canvas");
+    c.width=Math.round(cv.width*s);c.height=Math.round(cv.height*s);c.getContext("2d").drawImage(cv,0,0,c.width,c.height);
+    url=c.toDataURL("image/jpeg",q);
+    if(url.length<700000)return url;
+    max=Math.round(max*.8);q=Math.max(.4,q-.08);
+  }
+  return url;
 }
 
 /* ---------- rotas (botão voltar do celular) ---------- */
@@ -674,7 +715,7 @@ function entryHTML(r){
     '<div class="entry-body"><div class="entry-top"><div class="entry-title">'+esc(ty.nome)+esc(val)+'</div><div class="entry-date">'+fmt(r.data)+'</div></div>'+
     '<div class="ts">'+(t?esc(t.nome):"Toda a propriedade")+'</div>'+
     (r.nota?'<p class="entry-note">'+esc(r.nota)+'</p>':'')+
-    (r.foto?(r.foto.indexOf("sb:")===0?'<img data-sb="'+esc(r.foto.slice(3))+'" alt="Foto do registro de '+esc(ty.nome.toLowerCase())+'">':'<img src="'+r.foto+'" alt="Foto do registro de '+esc(ty.nome.toLowerCase())+'">'):'')+
+    (r.foto?(r.foto.indexOf("fs:")===0?'<img data-fs="'+esc(r.foto.slice(3))+'" alt="Foto do registro de '+esc(ty.nome.toLowerCase())+'">':'<img src="'+r.foto+'" alt="Foto do registro de '+esc(ty.nome.toLowerCase())+'">'):'')+
   '</div></div>';
 }
 function taskHTML(l){
@@ -805,15 +846,11 @@ function sheetRecord(tipo,tal){
         btn.disabled=true;btn.textContent="Enviando foto…";
         shrink(file,function(cv){
           if(!cv){done("");return;}
-          if(MODE==="nuvem"&&sb&&USER&&navigator.onLine!==false&&cv.toBlob){
-            cv.toBlob(function(blob){
-              var path=USER.id+"/"+rid+".jpg";
-              sb.storage.from("fotos").upload(path,blob,{contentType:"image/jpeg",upsert:true}).then(function(r){
-                if(r.error){toast("A foto ficou salva só no aparelho");done(cv.toDataURL("image/jpeg",.6));}
-                else{photoUrl[path]=URL.createObjectURL(blob);done("sb:"+path);}
-              },function(){done(cv.toDataURL("image/jpeg",.6));});
-            },"image/jpeg",.78);
-          }else done(cv.toDataURL("image/jpeg",.72));
+          var durl=compact(cv);
+          if(MODE==="nuvem"&&api&&USER){
+            fotoDoc(rid).set({img:durl,criado:new Date().toISOString()}).then(function(){},function(){toast("A foto não subiu agora; tente de novo com internet");});
+            photoUrl[rid]=durl;done("fs:"+rid);
+          }else done(durl);
         });
       };
     });
@@ -871,7 +908,7 @@ function sheetSettings(){
   var conta;
   if(MODE==="nuvem")conta='<div class="acct"><span class="hint">Conectado como</span><b>'+esc(USER.email||"")+'</b><span class="sync" data-s="'+syncNow+'"><i></i><span>'+SYNC_TXT[syncNow]+'</span></span></div><button class="btn ghost" id="sOut">Sair da conta</button>';
   else if(configured)conta='<div class="acct"><b>Usando sem conta</b><span class="hint">Os dados ficam só neste aparelho. Crie uma conta para ver tudo também no celular ou no PC. O que já está aqui vai junto.</span></div><button class="btn" id="sLogin">Entrar ou criar conta</button>';
-  else conta='<div class="acct"><b>Login ainda não configurado</b><span class="hint">Preencha o arquivo app/config.js com os dados do Supabase para ativar contas e sincronização.</span></div>';
+  else conta='<div class="acct"><b>Login ainda não configurado</b><span class="hint">Preencha o arquivo app/config.js com os dados do Firebase para ativar contas e sincronização.</span></div>';
   openSheet("Configurações",
     '<div class="stack">'+conta+'</div>'+
     '<form id="fSet" class="stack" style="margin-top:18px"><label for="sNome">Seu nome<input class="field" id="sNome" value="'+esc(S.nome)+'"></label><button class="btn ghost" type="submit">Salvar nome</button></form>'+
@@ -947,19 +984,9 @@ window.addEventListener("hashchange",function(){if(!S)return;closeSheet();route(
 window.addEventListener("online",function(){if(MODE!=="nuvem"||!USER)return;if(!pulled)startCloud(USER);else if(dirty)push();});
 window.addEventListener("offline",function(){if(MODE==="nuvem")setSync("offline");});
 document.addEventListener("visibilitychange",function(){
-  if(document.visibilityState!=="visible"||MODE!=="nuvem"||!pulled||dirty||!sb)return;
+  if(document.visibilityState!=="visible"||MODE!=="nuvem"||!pulled||dirty||!api)return;
   pull().then(function(row){if(row&&row.atualizado_em!==cloudStamp&&!dirty){S=row.dados;cloudStamp=row.atualizado_em;writeLocal(cacheKey(),S);if(!$("#sheetWrap").classList.contains("open"))render();setSync("ok");}}).catch(function(){});
 });
-function cleanUrl(){
-  if(location.search&&/[?&](code|error|error_description)=/.test(location.search)){
-    try{history.replaceState(null,"",location.pathname+(/^#(entrar|criar)$/.test(location.hash)?"":location.hash));}catch(e){}
-  }
-}
-function urlError(){
-  var q=new URLSearchParams(location.search),h=new URLSearchParams((location.hash||"").replace(/^#/,""));
-  var d=q.get("error_description")||h.get("error_description");
-  return d?decodeURIComponent(d.replace(/\+/g," ")):"";
-}
 function boot(){
   bindAuth();
   var want=(location.hash||"").slice(1);
@@ -967,25 +994,21 @@ function boot(){
   if(askAuth)try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
   if(!configured){if(askAuth)showAuth(want);else startLocal();return;}
   var modo=readLocal("safra-modo");
-  if(!sb){
+  if(!api){
     var last=readLocal("safra-ultimo-usuario");
     if(modo==="nuvem"&&last&&!askAuth){startCloud(last);return;}
     if(askAuth){showAuth(want);return;}
     startLocal();return;
   }
-  var err=urlError();
-  sb.auth.onAuthStateChange(function(ev,session){
-    if(ev==="PASSWORD_RECOVERY"&&session){startCloud(session.user,sheetNewPassword);}
-  });
-  sb.auth.getSession().then(function(r){
-    cleanUrl();
-    var sess=r.data&&r.data.session;
-    if(sess)startCloud(sess.user);
-    else if(err){showAuth("entrar");authMsg(ptErr({message:err}));}
+  var first=true;
+  auth.getRedirectResult().catch(function(e){if(!USER){showAuth("entrar");authMsg(ptErr(e));}});
+  auth.onAuthStateChanged(function(user){
+    if(!first)return;first=false;
+    if(user)startCloud(user);
     else if(askAuth)showAuth(want);
     else if(modo==="local")startLocal();
     else showAuth("entrar");
-  },function(){cleanUrl();(modo==="local"&&!askAuth)?startLocal():showAuth(askAuth?want:"entrar");});
+  });
 }
 boot();
 })();

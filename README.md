@@ -1,75 +1,61 @@
 # Safra · caderno de campo do produtor
 
-Site de apresentação + app (celular e computador) com login e dados na nuvem (Supabase).
+Site de apresentação + app (celular e computador) com login e dados na nuvem (Firebase, do Google).
 
 ## Estrutura
 
 ```
 safra/
-├── index.html          ← site de apresentação (página inicial)
+├── index.html              ← site de apresentação
 ├── app/
-│   ├── index.html      ← o app (celular e PC)
-│   └── config.js       ← URL e chave pública do Supabase (você preenche)
-├── supabase/
-│   └── schema.sql      ← script do banco: tabela, segurança e pasta de fotos
+│   ├── index.html          ← o app (celular e PC)
+│   └── config.js           ← configuração do Firebase (você preenche)
+├── firebase/
+│   └── firestore.rules     ← regras de segurança do banco
 └── README.md
 ```
 
-Links depois de publicar no Render:
-- `https://SEU-SITE.onrender.com/` → site de apresentação
-- `https://SEU-SITE.onrender.com/app/` → app
+- `https://safra-07nh.onrender.com/` → site
+- `https://safra-07nh.onrender.com/app/` → app
 
-## 1. Supabase (banco de dados + login)
+## 1. Criar o projeto no Firebase (grátis, sem cartão)
 
-1. Crie uma conta em https://supabase.com e clique em **New project**. Escolha um nome (ex.: `safra`), crie uma senha do banco (guarde) e a região **South America (São Paulo)**.
-2. Quando o projeto terminar de criar, abra **SQL Editor → New query**, cole todo o conteúdo de `supabase/schema.sql` e clique em **Run**. Deve aparecer "Success".
-3. Abra **Project Settings → API** (em projetos novos pode aparecer como **Data API** e **API Keys**) e copie:
-   - **Project URL** (ex.: `https://abcd1234.supabase.co`)
-   - a chave **anon public** (ou **publishable**)
-4. Cole os dois em `app/config.js`. Nunca use a chave `service_role` / `secret`.
-5. Em **Authentication → URL Configuration**:
-   - **Site URL**: `https://SEU-SITE.onrender.com/app/`
-   - **Redirect URLs**: adicione `https://SEU-SITE.onrender.com/app/` e `http://127.0.0.1:5500/app/` (para testar com o Live Server)
+1. Entre em https://console.firebase.google.com com sua conta Google → **Criar um projeto** → nome `safra` → pode desativar o Google Analytics → **Criar projeto**.
+2. Na tela do projeto, clique no ícone **</>** (Web) → apelido `safra-web` → **Registrar app** (não marque Firebase Hosting). Copie o bloco `firebaseConfig` que aparece.
+3. Cole os valores em `app/config.js`, dentro de `firebase: { ... }`.
 
-Para testar sem precisar confirmar e-mail: **Authentication → Sign In / Providers → Email** → desligue **Confirm email**. Em produção, deixe ligado.
+## 2. Ativar o login
 
-## 1b. Login com Google, Microsoft, Apple e GitHub
+1. Menu **Criação → Authentication → Vamos começar**.
+2. Aba **Método de login**:
+   - **E-mail/senha** → Ativar → Salvar. Aceita qualquer e-mail: Gmail, Outlook, Hotmail, iCloud, Yahoo…
+   - **Google** → Ativar → escolha o e-mail de suporte → Salvar. Não precisa de mais nada.
+3. Aba **Configurações → Domínios autorizados → Adicionar domínio**:
+   - `safra-07nh.onrender.com`
+   - `127.0.0.1` (para testar com o Live Server; `localhost` já vem na lista)
 
-Entrar com **e-mail e senha** já aceita qualquer e-mail (Gmail, Outlook, Hotmail, iCloud, Yahoo…).
-Os botões "Continuar com…" precisam ser ativados um por um no Supabase, em **Authentication → Sign In / Providers**.
-Em todos eles, o endereço de retorno (Callback URL) é:
+### Outros botões (opcionais)
 
-```
-https://SEU-PROJETO.supabase.co/auth/v1/callback
-```
+O endereço de retorno pedido por esses serviços aparece na própria tela do provedor no Firebase. É algo como `https://SEU-PROJETO.firebaseapp.com/__/auth/handler`.
 
-- **GitHub** (mais fácil): github.com → Settings → Developer settings → OAuth Apps → New OAuth App. Homepage: seu link do Render. Callback: o endereço acima. Copie o Client ID e gere um Client Secret, depois cole no provedor GitHub do Supabase.
-- **Google**: console.cloud.google.com → crie um projeto → APIs e serviços → Tela de consentimento OAuth (Externo) → Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web. Em "URIs de redirecionamento autorizados", cole o Callback. Cole o Client ID e o Secret no provedor Google do Supabase.
-- **Microsoft (Outlook/Hotmail)**: portal.azure.com → Microsoft Entra ID → Registros de aplicativo → Novo registro. Tipo de conta: "contas em qualquer diretório organizacional e contas Microsoft pessoais". URI de redirecionamento (Web): o Callback. Em "Certificados e segredos", crie um segredo. Cole o ID do aplicativo (cliente) e o valor do segredo no provedor **Azure** do Supabase.
-- **Apple**: exige conta no Apple Developer Program (paga, US$ 99/ano). Sem ela, tire "apple" da lista em `config.js`.
+- **Microsoft (Outlook/Hotmail)**: portal.azure.com → Microsoft Entra ID → Registros de aplicativo → Novo registro → "contas em qualquer diretório organizacional e contas Microsoft pessoais" → URI de redirecionamento (Web) = endereço de retorno do Firebase. Em "Certificados e segredos" crie um segredo. No Firebase, ative **Microsoft** e cole o ID do aplicativo e o segredo.
+- **GitHub**: github.com → Settings → Developer settings → OAuth Apps → New OAuth App → Authorization callback URL = endereço de retorno do Firebase. No Firebase, ative **GitHub** e cole Client ID e Client Secret.
+- **Apple**: exige Apple Developer Program (US$ 99/ano).
 
-Depois de ativar, deixe em `app/config.js` só os provedores que funcionam, por exemplo:
+Depois, liste em `app/config.js` só os que você ativou:
 
 ```js
-provedores: ["google", "azure", "github"]
+provedores: ["google", "microsoft", "github"]
 ```
 
-## 2. Testar no computador
+## 3. Criar o banco (Firestore)
 
-Abra a pasta no VS Code e rode o **Live Server** no `index.html` da raiz. O app fica em `http://127.0.0.1:5500/app/`.
+1. Menu **Criação → Firestore Database → Criar banco de dados**.
+2. Local: `southamerica-east1 (São Paulo)` → **Iniciar no modo de produção** → Criar.
+3. Aba **Regras**: apague tudo, cole o conteúdo de `firebase/firestore.rules` e clique em **Publicar**.
 
-Com o `config.js` vazio, o app funciona sem login, só no aparelho.
+As fotos do diário ficam dentro do próprio Firestore, comprimidas. Assim não é preciso o Cloud Storage, que hoje exige plano pago.
 
-## 3. Publicar (GitHub + Render)
+## 4. Publicar
 
 No VS Code: **Source Control → mensagem → Commit → Sync Changes**. O Render publica sozinho.
-
-Configuração do Static Site no Render: Build Command vazio e **Publish Directory** `.` (ponto).
-
-## Como os dados funcionam
-
-- Cada conta tem uma linha na tabela `safra_dados` com todos os talhões, registros, tarefas e checklist.
-- As fotos vão para a pasta privada `fotos/<id-do-usuario>/` no Storage do Supabase.
-- As regras de segurança (RLS) garantem que cada usuário só lê e altera os próprios dados.
-- Sem internet, o app salva no aparelho e envia quando a conexão volta.
-- Quem usava sem conta e cria uma conta depois leva os dados do aparelho junto.

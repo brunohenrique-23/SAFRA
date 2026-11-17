@@ -1,23 +1,27 @@
 // =============================================================
-// Safra · configuração do Supabase
-// Cole aqui os dados do seu projeto em:
-// Supabase → Project Settings → API (ou "Data API" / "API Keys")
+// Safra · configuração do Firebase
 //
-// Pode deixar a chave pública (anon / publishable) aqui sem medo:
-// ela foi feita para ficar no navegador. Quem protege os dados são
-// as regras de segurança (RLS) criadas pelo arquivo supabase/schema.sql.
+// Cole aqui o objeto "firebaseConfig" do seu projeto:
+// Firebase → ⚙ Configurações do projeto → Geral → Seus apps → app da Web (</>)
 //
-// NUNCA coloque aqui a chave "service_role" / "secret".
+// Esses valores podem ficar no site sem problema: foram feitos para o
+// navegador. Quem protege os dados são as regras do Firestore
+// (arquivo firebase/firestore.rules).
 //
-// Enquanto os dois campos estiverem vazios, o app funciona só no
-// aparelho, sem login.
+// Enquanto "apiKey" estiver vazio, o app funciona só no aparelho, sem login.
 // =============================================================
 window.SAFRA_CONFIG = {
-  supabaseUrl: "",      // ex.: "https://abcdefghijkl.supabase.co"
-  supabaseAnonKey: "",  // ex.: "eyJhbGciOi..." ou "sb_publishable_..."
+  firebase: {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
+  },
 
-  // Botões de login social que aparecem na tela de entrada.
-  // Deixe só os que você ativou no Supabase (Authentication → Providers).
-  // Opções: "google", "azure" (Microsoft/Outlook/Hotmail), "apple", "github"
-  provedores: ["google", "azure", "apple"]
+  // Botões "Continuar com…" da tela de entrada.
+  // Deixe só os que você ativou em Authentication → Método de login.
+  // Opções: "google", "microsoft", "apple", "github"
+  provedores: ["google"]
 };
